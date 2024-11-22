@@ -40,19 +40,6 @@ const GoogleSignupButton = () => {
 };
 
 // Google Login
-const handleGoogleLogin = async () => {
-  const auth = getAuth();
-  try {
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user; // The logged-in user's info
-    console.log("Logged In User:", user);
-    alert(`Welcome back, ${user.displayName}!`);
-  } catch (error) {
-    console.error("Login Error:", error.message);
-    alert("Login with Google failed. Please try again.");
-  }
-};
-
 const GoogleLoginButton = () => {
   const navigate = useNavigate();
 
