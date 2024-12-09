@@ -6,6 +6,8 @@ import Signup from "./components/signup";
 import Login from "./components/login";
 import Home from "./components/home";
 import Profile from "./components/profile";
+import Dashboard from "./components/dashboard";
+
 
 
 
@@ -18,6 +20,7 @@ const App = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/profile/:uuid" element={<Profile />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
   );
