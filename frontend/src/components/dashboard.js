@@ -189,7 +189,19 @@ const Dashboard = () => {
             />
           </Grid2>
 
-          <Grid2 item xs={12} md={4}>
+          <Grid2 
+            item 
+            xs={12} 
+            md={4} 
+            onClick={() => navigate(`/reach-and-recall/${uid}/home-page`)}
+            sx={{
+              cursor: 'pointer',
+              transition: 'transform 0.3s ease-in-out',
+              '&:hover': { 
+                transform: 'scale(1.05)',
+              }
+            }}
+          >
             <GameCard
               title="Reach & Recall"
               level={`Level ${level}`}

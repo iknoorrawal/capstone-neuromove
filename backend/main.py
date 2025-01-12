@@ -19,11 +19,6 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-@app.get("/testing")
-def read_root():
-    return {"message": "Testing Codebase Setup"}
-
-
 @app.post("/run-script")
 async def run_script(numbers: dict = Body(...)):
     try:
