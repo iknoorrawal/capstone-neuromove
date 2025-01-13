@@ -22,8 +22,13 @@ const theme = createTheme({
     h5: {
       color: '#2d4b39',
     },
-    body1: {
-      color: '#555',
+    textPrimary: {
+      color: 'rgba(0, 0, 0, 0.87)',
+      fontSize: "24px",
+    },
+    textSecondary: {
+      color: 'rgba(0, 0, 0, 0.60)',
+      fontSize: "14px",
     },
     button: {
       textTransform: 'none', // Prevent uppercase transformation on buttons

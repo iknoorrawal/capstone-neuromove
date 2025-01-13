@@ -1,20 +1,31 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useState } from "react";
+import { auth } from "../firebase";
 import { Link } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 import { TextField, Button, Box, Typography, Divider } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { FcGoogle } from "react-icons/fc";
-import clayman from "../assets/clayman.png";
 import logo from "../assets/logo.png";
+import WavySeparator from "../assets/wavy-separator.svg";
 
 const Home = () => {
-  const textRef = useRef(null);
-  const [logoHeight, setLogoHeight] = useState(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const theme = useTheme();
 
-  useEffect(() => {
-    // Dynamically calculate the height of the text block
-    if (textRef.current) {
-      setLogoHeight(textRef.current.offsetHeight);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userId = userCredential.user.uid;
+      navigate(`/profile/${userId}`);
+    } catch (err) {
+      setError(err.message);
     }
-  }, []);
+  };
 
   return (
     <Box
@@ -22,89 +33,110 @@ const Home = () => {
         display: "flex",
         flexDirection: "row",
         minHeight: "100vh",
-        position: "relative",
-        minWidth: "100vw",
-        background: "linear-gradient(to right, #e5f5ee, #f6d6bd)",
-        overflow: "hidden",
+        width: "100vw",
+        background: `radial-gradient(
+          155.21% 108.68% at 63.39% 93.33%,
+          rgba(126, 163, 78, 0.50) 9.9%,
+          rgba(251, 245, 229, 0.50) 61.58%,
+          rgba(126, 163, 78, 0.50) 100%
+        ),
+        radial-gradient(
+          78.78% 74.65% at 37.93% -12.37%,
+          #B86539 28.07%,
+          #B1DADF 100%
+        )`,
+        "@media (max-width: 768px)": {
+          flexDirection: "column", // Stack sections on smaller screens
+        },
       }}
     >
-      {/* Left Section: Illustration */}
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          position: "relative",
-        }}
-      >
-        <Box
-          component="img"
-          src={clayman}
-          alt="Character Illustration"
-          sx={{
-            maxWidth: "100%",
-            height: "auto",
-            maxHeight: "90vh",
-            position: "absolute",
-            bottom: "0",
-          }}
-        />
-      </Box>
-
-      {/* Right Section: Title and Login Form */}
+      {/* Left Section */}
       <Box
         sx={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          alignItems: "center",
-          padding: 4,
+          alignItems: "flex-start",
+          padding: "0 4rem",
+          gap: 2,
+          position: "relative",
+          zIndex: 2,
         }}
       >
-        {/* Welcome to NeuroMove */}
-        <Box 
-          sx={{ 
-            display: "flex", 
-            alignItems: "center", 
-            gap: 2, 
-            textAlign: "left" }}>
-          <Box>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: "normal",
-                color: "#005c4b",
-                lineHeight: "1.2",
-              }}
-            >
-              Welcome to
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: "800",
-                color: "#005c4b",
-                lineHeight: "1.2",
-              }}
-            >
-              NeuroMove
-            </Typography>
-          </Box>
-          <Box
-            component="img"
-            src={logo}
-            alt="NeuroMove Logo"
-            sx={{
-               height: logoHeight ? `${logoHeight}px` : "50px",
-              width: "auto",
-            }}
-          />
-        </Box>
+        <Box
+          component="img"
+          src={logo}
+          alt="NeuroMove Logo"
+          sx={{
+            height: "80px",
+            width: "auto",
+            marginBottom: 2,
+          }}
+        />
+        <Typography
+          sx={{
+            fontFamily: "Inter, sans-serif",
+            fontSize: "64px",
+            fontWeight: "400",
+            color: "var(--teal-900, #004D40)",
+            textAlign: "left",
+            lineHeight: "1.2",
+            letterSpacing: "-1.5px",
+          }}
+        >
+          Welcome to
+        </Typography>
+        <Typography
+          sx={{
+            fontFamily: "Inter, sans-serif",
+            fontSize: "64px",
+            fontWeight: "1000",
+            color: "var(--teal-900, #004D40)",
+            textAlign: "left",
+            lineHeight: "1.2",
+            letterSpacing: "-1.5px",
+          }}
+        >
+          NeuroMove
+        </Typography>
+      </Box>
 
+      {/* Right Section */}
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#ffffff",
+          position: "relative",
+        }}
+      >
+        {/* SVG Wavy Separator */}
+        <Box
+          component="img"
+          src={WavySeparator}
+          alt="Wavy Separator"
+          sx={{
+            position: "absolute",
+            top: 0,
+            right: "-20px",
+            height: "100%",
+            width: "auto",
+            objectFit: "contain",
+            pointerEvents: "none",
+            zIndex: 1,
+            "@media (max-width: 768px)": {
+              right: "-10px",
+            },
+            "@media (min-width: 1160px)": {
+              width: "160%", // Expand for wide screens
+            },
+          }}
+        />
 
-        {/* Login Form Card*/}
+        {/* Login Form */}
         <Box
           sx={{
             width: "80%",
@@ -113,25 +145,25 @@ const Home = () => {
             backgroundColor: "white",
             borderRadius: "16px",
             boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.15)",
+            zIndex: 2,
           }}
         >
           <Typography
-            variant="h5"
             component="h2"
             sx={{
-              textAlign: "center",
-              color: "#2d4b39",
-              fontWeight: "bold",
-              marginBottom: 2,
+              fontSize: theme.typography.textPrimary.fontSize,
+              textAlign: "left",
+              color: theme.typography.textPrimary.color,
+              marginBottom: 1,
             }}
           >
             Log In
           </Typography>
           <Typography
-            variant="body2"
             sx={{
-              textAlign: "center",
-              color: "#555",
+              color: theme.typography.textSecondary.color,
+              fontSize: "14px",
+              textAlign: "left",
               marginBottom: 3,
             }}
           >
@@ -139,10 +171,7 @@ const Home = () => {
           </Typography>
           <Box
             component="form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              console.log("Login form submitted");
-            }}
+            onSubmit={handleLogin}
             sx={{
               display: "flex",
               flexDirection: "column",
@@ -155,6 +184,8 @@ const Home = () => {
               variant="outlined"
               fullWidth
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
             <TextField
               label="Password"
@@ -162,6 +193,8 @@ const Home = () => {
               variant="outlined"
               fullWidth
               required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <Button
               type="submit"
