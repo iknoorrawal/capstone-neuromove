@@ -25,7 +25,7 @@ async def run_script(numbers: dict = Body(...)):
         number1 = numbers.get("number1")
         number2 = numbers.get("number2")
         subprocess.Popen(["python", "hand_tracking.py", str(number1), str(number2)])
-        return {"status": "success", "message": "Script started successfully with numbers", "numbers": numbers}
+        return {"status": "success", "numbers": numbers}
     except Exception as e:
         return {"status": "error", "error": str(e)}
 
