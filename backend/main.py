@@ -17,9 +17,7 @@ app.add_middleware(
     allow_credentials=True,  # Allow cookies and auth headers
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
-)
-
-@app.post("/run-script")
+)@app.post("/run-script")
 async def run_script(numbers: dict = Body(...)):
     try:
         number1 = numbers.get("number1")
@@ -33,7 +31,7 @@ async def run_script(numbers: dict = Body(...)):
 
 @app.get("/get-number")
 async def generate_random_number():
-    number1 = random.randint(1, 100)
-    number2 = random.randint(1, 100)
+    number1 = random.randint(1, 20)
+    number2 = random.randint(1, 20)
     return {"number1": number1, "number2": number2}
 
