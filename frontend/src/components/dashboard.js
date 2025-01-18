@@ -116,13 +116,24 @@ const Dashboard = () => {
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Button
-            variant="text"
-            onClick={handleClick}
-            sx={{ textTransform: "none", fontWeight: "bold" , color: "black"}}
-          >
-            {firstName} {lastName}
-          </Button>
+        <Button
+          variant="text"
+          onClick={handleClick}
+          sx={{
+            textTransform: "none",
+            fontWeight: "bold",
+            color: "black",
+            border: "1px solid #000", // Black border for the boundary
+            borderRadius: "24px", // Rounded corners
+            padding: "4px 16px", // Padding for consistent spacing
+            ":hover": {
+              backgroundColor: "rgba(0, 0, 0, 0.1)", // Subtle hover effect
+            },
+          }}
+        >
+          {firstName} {lastName}
+        </Button>
+
           <Menu
             anchorEl={anchorEl}
             open={open}
@@ -169,26 +180,30 @@ const Dashboard = () => {
           </Box>
         </Box>
 
-        <Grid2 container spacing={8} justifyContent="center">
-          <Grid2 item xs={12} md={4}>
-            <GameCard
-              title="Balance Quest"
-              level={`Level ${level}`}
-              description="Strengthen your balance and sharpen your mind by switching feet."
-              bgColor="#E67A26"
-              style={{ width: "100%", height: "auto", borderRadius: "8px" }}
-            />
-          </Grid2>
-
-          <Grid2 item xs={12} md={4}>
-            <GameCard
-              title="Beat Step"
-              level={`Level ${level}`}
-              description="Train your rhythm and coordination with stepping challenges."
-              bgColor="#369B9F"
-            />
-          </Grid2>
-
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "nowrap",
+            gap: 4,
+            overflowX: "auto",
+            px: 2, // Add padding for responsiveness
+          }}
+        >
+          <GameCard
+            title="Balance Quest"
+            level={`Level ${level}`}
+            description="Strengthen your balance and sharpen your mind by switching feet."
+            bgColor="orange"
+            image="/balancequest.png" // Replace with your image URL
+          />
+          <GameCard
+            title="Beat Step"
+            level={`Level ${level}`}
+            description="Train your rhythm and coordination with stepping challenges."
+            bgColor="teal"
+            image="/beatstep.png" // Replace with your image URL
+          />
           <Grid2 
             item 
             xs={12} 
@@ -202,53 +217,85 @@ const Dashboard = () => {
               }
             }}
           >
-            <GameCard
-              title="Reach & Recall"
-              level={`Level ${level}`}
-              description="Improve flexibility and memory by reaching and recalling items."
-              bgColor="#F46895"
-            />
+          <GameCard
+            title="Reach & Recall"
+            level={`Level ${level}`}
+            description="Improve flexibility and memory by reaching and recalling items."
+            bgColor="pink"
+            image="/reachrecall.png" // Replace with your image URL
+          />
           </Grid2>
-        </Grid2>
+        </Box>
       </Box>
     </Box>
   );
 };
 
-const GameCard = ({ title, level, description, bgColor }) => {
+const GameCard = ({ title, level, description, bgColor, image }) => {
+
+  const gradientColors = {
+    orange: "linear-gradient(135deg, #E67A26, #FFB74D)",
+    teal: "linear-gradient(135deg, #369B9F, #4DB6AC)",
+    pink: "linear-gradient(135deg, #F46895, #F8BBD0)",
+  };
+
   return (
     <Card
       sx={{
         width: 355,
         height: 450,
         borderRadius: 3,
-        backgroundColor: bgColor,
+        background: gradientColors[bgColor] || gradientColors.orange, // Default to orange gradient
         color: "#fff",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      <Typography
+        variant="overline"
+        sx={{
+          position: "absolute",
+          top: 8,
+          right: 8,
+          bgcolor: "#fff",
+          color: "#000",
+          borderRadius: 1,
+          p: "2px 6px",
+        }}
+      >
+        {level}
+      </Typography>
       <CardContent>
         <Typography variant="h5" fontWeight="bold">
           {title}
-        </Typography>
-        <Typography
-          variant="overline"
-          sx={{
-            bgcolor: "#fff",
-            color: "#000",
-            borderRadius: 1,
-            p: "2px 6px",
-            display: "inline-block",
-            mt: 1,
-          }}
-        >
-          {level}
         </Typography>
         <Typography variant="body2" sx={{ mt: 2 }}>
           {description}
         </Typography>
       </CardContent>
+      {image && (
+        <Box
+          sx={{
+            paddingBottom: 2, // Adds padding to the bottom of the image
+            backgroundColor: "transparent", // Ensure padding blends with the card background
+          }}
+        >
+          <Box
+            component="img"
+            src={image}
+            alt={`${title} image`}
+            sx={{
+            width: "100%",
+            height: "100%", // Increased height to display the entire image
+            objectFit: "scale-down", // Ensures the image scales correctly
+            borderRadius: "5px",
+          }}
+          />
+        </Box>
+      )}
     </Card>
   );
 };
+
 
 export default Dashboard;
