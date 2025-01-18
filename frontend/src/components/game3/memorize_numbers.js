@@ -1,6 +1,6 @@
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   CircularProgress,
   Typography,
@@ -10,9 +10,9 @@ import {
   DialogTitle,
   DialogActions,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
 
-const ReachAndRecallMemorize = ({ user }) => {
+const ReachAndRecallMemorize = () => {
+  const { uid } = useParams();
   const navigate = useNavigate();
 
   const [data, setData] = useState(null);
@@ -24,9 +24,12 @@ const ReachAndRecallMemorize = ({ user }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log('Fetching numbers from backend...');
         const response = await axios.get("http://127.0.0.1:8000/get-number");
+        console.log('Response:', response.data);
         setData(response.data);
       } catch (err) {
+        console.error('Error fetching numbers:', err);
         setError(err.message);
       }
     };
@@ -73,7 +76,7 @@ const ReachAndRecallMemorize = ({ user }) => {
 
   const handleConfirmExit = () => {
     setOpenConfirm(false);
-    navigate(`/reach-and-recall/${user?.uid}/home-page`);
+    navigate(`/reach-and-recall/${uid}/home-page`);
   };
 
   if (error) {

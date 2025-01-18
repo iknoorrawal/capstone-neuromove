@@ -44,32 +44,31 @@ const ReachAndRecallLevelsPage = () => {
         return () => unsubscribe();
     }, [uid, navigate]);
 
+    const handleStartGame = () => {
+        const level = userData?.level || 1; // Default to level 1 if not set
+        navigate(`/reach-and-recall/${uid}/memorize/level/${level}`);
+    };
+
     if (loading) {
         return (
-            <Box
-                sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "100vh",
-                }}
-            >
+            <Box sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100vh",
+            }}>
                 <CircularProgress />
             </Box>
         );
     }
 
-    const level = userData?.level;
-
     return (
-        <Box
-            sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100vh",
-            }}
-        >
+        <Box sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+        }}>
             <Box
                 sx={{
                     backgroundColor: "#F0F0F0",
@@ -86,14 +85,13 @@ const ReachAndRecallLevelsPage = () => {
                         transform: "scale(1.05)",
                     },
                 }}
-                onClick={() => navigate(`/reach-and-recall/${uid}/memorize/level/${level}`)}
+                onClick={handleStartGame}
             >
                 <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
                     Start Game
                 </Typography>
                 <Typography variant="body1" sx={{ textAlign: "center", color: "#555" }}>
-                    Click to begin the Reach & Recall memory challenge! 
-                    {/* TODO: Instructions */}
+                    Click to begin the Reach & Recall memory challenge!
                 </Typography>
             </Box>
         </Box>
