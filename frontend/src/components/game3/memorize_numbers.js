@@ -53,12 +53,35 @@ const ReachAndRecallMemorize = () => {
     if (!data) return;
 
     try {
-      const response = await axios.post("http://127.0.0.1:8000/run-script", {
-        number1: data.number1,
-        number2: data.number2,
-      });
 
-      setOutput(response.data.message || "The game will begin automatically now!");
+      let gameComplete = false;
+      while (!gameComplete) {
+        
+
+        const response = await axios.post("http://127.0.0.1:8000/run-script", {
+          number1: data.number1,
+          number2: data.number2,
+        });
+
+        setOutput(response.data.message || "The game will begin automatically now!");
+
+        if (response.data.status === 'complete') {
+          gameComplete = true;
+          navigate('/final-score', {
+            state: {
+              correct: response.data.scores.correct,
+              incorrect: response.data.scores.incorrect,
+              uid: uid
+            }
+          });
+        } else if (response.data.status === 'error') {
+          throw new Error(response.data.error);
+        }
+
+        // Wait a second before polling again
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
       setError(null);
     } catch (err) {
       setError("Failed to start script: " + err.message);

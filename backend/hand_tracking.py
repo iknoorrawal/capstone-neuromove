@@ -4,6 +4,7 @@ import mediapipe as mp
 import time
 import random
 import math
+import numpy as np
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser()
@@ -26,6 +27,15 @@ start_time = time.time()  # Start the timer
 countdown_duration = 5  # Countdown duration in seconds
 recorded = False  # Flag to indicate if data has been recorded
 game_started = False  # Flag to start the game logic
+
+# Game state variables
+correct_count = 0
+incorrect_count = 0
+found_numbers = set()  # Track which numbers have been found
+touched_circles = {}  # Change to dictionary to store timestamps for touched circles
+touch_cooldown = 1.0  # Cooldown in seconds before a circle can be counted again
+game_end_time = None  # Track when game completion starts
+end_game_delay = 3.0  # Seconds to show final screen
 
 # Initialize variables
 left_hand_coord = None
@@ -60,6 +70,12 @@ with mp_hands.Hands(
         # Convert to RGB for MediaPipe
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = hands.process(frame_rgb)
+
+        # Display counters in top-left corner
+        cv2.putText(frame, f"Correct: {correct_count}", (10, 30), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        cv2.putText(frame, f"Incorrect: {incorrect_count}", (10, 70), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
         # Countdown logic
         elapsed_time = time.time() - start_time
@@ -122,13 +138,16 @@ with mp_hands.Hands(
                     "y": circle_y,
                     "number": numbers_to_display[i],
                     "visible": True,
-                    "timestamp": None  # Add a timestamp key
+                    "timestamp": None,
+                    "message": None,
+                    "message_bg": None,
+                    "try_again_timestamp": None
                 })
 
             recorded = True
             game_started = True
 
-        # Draw additional game circles
+        # Draw additional game circles and their messages
         if game_started:
             for circle in additional_circles:
                 if circle["visible"]:
@@ -144,6 +163,24 @@ with mp_hands.Hands(
                     text_y = circle["y"] + text_size[1] // 2
                     cv2.putText(frame, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, text_scale, text_color, text_thickness)
 
+                    # Draw "Correct!" message if exists
+                    if circle["message"] and circle["timestamp"]:
+                        if current_time - circle["timestamp"] <= 2:
+                            cv2.rectangle(frame, (circle["x"] - 100, circle["y"] - 150),
+                                       (circle["x"] + 100, circle["y"] - 100), circle["message_bg"], -1)
+                            cv2.putText(frame, circle["message"], (circle["x"] - 80, circle["y"] - 115),
+                                     cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2)
+                    
+                    # Draw "Try Again" message if exists (only message, not bubble)
+                    if circle["try_again_timestamp"]:
+                        if current_time - circle["try_again_timestamp"] <= 1:
+                            cv2.rectangle(frame, (circle["x"] - 100, circle["y"] - 150),
+                                       (circle["x"] + 100, circle["y"] - 100), try_again_bg, -1)
+                            cv2.putText(frame, "Try Again", (circle["x"] - 80, circle["y"] - 115),
+                                     cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2)
+                        else:
+                            circle["try_again_timestamp"] = None  # Only reset the message timestamp
+
         # Detect fingertip interaction
         current_time = time.time()
         if results.multi_hand_landmarks:
@@ -153,8 +190,8 @@ with mp_hands.Hands(
                     frame,
                     hand_landmarks,
                     mp_hands.HAND_CONNECTIONS,
-                    mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=5),  # Red dots
-                    mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2)  # Green connections
+                    mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=5),
+                    mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2)
                 )
 
                 index_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
@@ -164,29 +201,82 @@ with mp_hands.Hands(
                     if circle["visible"]:
                         # Calculate distance between fingertip and circle
                         distance = math.sqrt((circle["x"] - x)**2 + (circle["y"] - y)**2)
+                        circle_id = (circle["x"], circle["y"], circle["number"])
+                        
                         if distance < circle_radius:
-                            if circle["number"] in [number1, number2]:
+                            if circle["number"] in [number1, number2] and circle["number"] not in found_numbers:
+                                correct_count += 1
+                                found_numbers.add(circle["number"])
                                 if circle["timestamp"] is None:
                                     circle["timestamp"] = current_time
-                                # Draw "Correct!" message
-                                cv2.rectangle(frame, (circle["x"] - 100, circle["y"] - 150),
-                                              (circle["x"] + 100, circle["y"] - 100), correct_bg, -1)
-                                cv2.putText(frame, "Correct!", (circle["x"] - 80, circle["y"] - 115),
-                                            cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2)
-                            else:
-                                # Draw "Try Again" message
-                                cv2.rectangle(frame, (circle["x"] - 100, circle["y"] - 150),
-                                              (circle["x"] + 100, circle["y"] - 100), try_again_bg, -1)
-                                cv2.putText(frame, "Try Again", (circle["x"] - 80, circle["y"] - 115),
-                                            cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2)
+                                    circle["message"] = "Correct!"
+                                    circle["message_bg"] = correct_bg
+                            # Check if circle hasn't been touched or cooldown has expired
+                            elif (circle["number"] not in found_numbers and 
+                                  (circle_id not in touched_circles or 
+                                   current_time - touched_circles.get(circle_id, 0) > touch_cooldown)):
+                                incorrect_count += 1
+                                touched_circles[circle_id] = current_time
+                                circle["try_again_timestamp"] = current_time  # Store timestamp for try again message
 
-        # Remove "Correct" circles after 2 seconds
+        # Clean up old entries from touched_circles (optional)
+        touched_circles = {k: v for k, v in touched_circles.items() 
+                         if current_time - v <= touch_cooldown}
+
+        # Remove only "Correct" circles
         for circle in additional_circles:
-            if circle["timestamp"] and current_time - circle["timestamp"] > 1:
+            if circle["timestamp"] and current_time - circle["timestamp"] > 2:
                 circle["visible"] = False
 
         # Show the frame
         cv2.imshow('Hand Tracking Game', frame)
+        
+        # Check for game completion
+        if correct_count >= 2:
+            if game_end_time is None:
+                game_end_time = time.time()
+                print(f"\nGame Complete!\nCorrect Selections: {correct_count}\nIncorrect Attempts: {incorrect_count}")
+            
+            # Create a fresh frame for the completion message
+            completion_frame = frame.copy()
+            height, width = completion_frame.shape[:2]
+            
+            # Create dark overlay
+            overlay = np.zeros((height, width, 3), dtype=np.uint8)
+            cv2.addWeighted(overlay, 0.7, completion_frame, 0.3, 0, completion_frame)  # Darker overlay
+            
+            # Draw completion message
+            message = "Game Complete!"
+            sub_message = "Go back to browser"
+            
+            # Main message
+            font_scale = 2
+            thickness = 3
+            text_size = cv2.getTextSize(message, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)[0]
+            text_x = (width - text_size[0]) // 2
+            text_y = height // 2
+            
+            cv2.putText(completion_frame, message,
+                      (text_x, text_y),
+                      cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), thickness)
+            
+            # Sub message
+            font_scale_sub = 1
+            text_size_sub = cv2.getTextSize(sub_message, cv2.FONT_HERSHEY_SIMPLEX, font_scale_sub, thickness)[0]
+            text_x_sub = (width - text_size_sub[0]) // 2
+            
+            cv2.putText(completion_frame, sub_message,
+                      (text_x_sub, text_y + 50),
+                      cv2.FONT_HERSHEY_SIMPLEX, font_scale_sub, (255, 255, 255), 2)
+            
+            # Show completion frame
+            cv2.imshow('Hand Tracking Game', completion_frame)
+            cv2.waitKey(1)  # Important: Update the window
+            
+            # Close after 5 seconds
+            if time.time() - game_end_time >= 5.0:  # Changed to 5 seconds
+                break
+            
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
