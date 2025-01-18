@@ -3,6 +3,7 @@ import cv2
 import mediapipe as mp
 import time
 import random
+import math
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser()
@@ -26,13 +27,19 @@ countdown_duration = 5  # Countdown duration in seconds
 recorded = False  # Flag to indicate if data has been recorded
 game_started = False  # Flag to start the game logic
 
-# Initialize variables for hand coordinates
+# Initialize variables
 left_hand_coord = None
 right_hand_coord = None
-
-# Additional circles
+wingspan = 0  # Wingspan value to store
 additional_circles = []
-circle_radius = 50
+circle_radius = 70  # Circle size increased
+screen_margin = 120  # Prevent circles from touching screen edges
+
+# Colors
+circle_bg_color = (154, 105, 247)  # F7699A in BGR
+text_color = (255, 255, 255)  # White
+try_again_bg = (0, 0, 255)  # Red background
+correct_bg = (0, 255, 0)  # Green background
 
 # Initialize MediaPipe Hands
 with mp_hands.Hands(
@@ -63,113 +70,120 @@ with mp_hands.Hands(
             cv2.putText(frame, f"{countdown}", (frame.shape[1] // 2 - 50, frame.shape[0] // 2),
                         cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 255, 255), 6)
 
-        # Check if hands are detected and data hasn't been recorded yet
-        if countdown == 1 and not recorded and results.multi_hand_landmarks:
-            # Iterate over detected hands
+        # Measure wingspan
+        if results.multi_hand_landmarks and wingspan == 0:
             for idx, hand_landmarks in enumerate(results.multi_hand_landmarks):
-                # Extract x, y positions of the index finger tip (Landmark 8)
+                # Extract index finger tip coordinates
                 index_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
                 x, y = int(index_finger_tip.x * frame.shape[1]), int(index_finger_tip.y * frame.shape[0])
 
                 # Assign left and right fingertip coordinates
-                if idx == 0:  # Assume first hand is left
+                if idx == 0:
                     left_hand_coord = (x, y)
-                elif idx == 1:  # Assume second hand is right
+                elif idx == 1:
                     right_hand_coord = (x, y)
 
-            # Generate additional circles with unique random numbers
-            for _ in range(3):
-                while True:
-                    # Generate random coordinates
-                    circle_x = random.randint(circle_radius, frame.shape[1] - circle_radius)
-                    circle_y = random.randint(circle_radius, frame.shape[0] - circle_radius)
+            # Calculate wingspan
+            if left_hand_coord and right_hand_coord:
+                dx = right_hand_coord[0] - left_hand_coord[0]
+                dy = right_hand_coord[1] - left_hand_coord[1]
+                wingspan = math.sqrt(dx**2 + dy**2)
 
-                    # Ensure the circle does not overlap with hands
-                    if left_hand_coord and right_hand_coord:
-                        if (abs(circle_x - left_hand_coord[0]) > circle_radius * 2 and
-                                abs(circle_y - left_hand_coord[1]) > circle_radius * 2 and
-                                abs(circle_x - right_hand_coord[0]) > circle_radius * 2 and
-                                abs(circle_y - right_hand_coord[1]) > circle_radius * 2):
-                            break
-                # Generate a unique number different from number1 and number2
-                while True:
-                    random_number = random.randint(1, 100)
-                    if random_number not in [number1, number2]:
-                        break
+        # Generate circles after countdown ends
+        if countdown == 1 and not recorded and wingspan > 0:
+            # Calculate radius and center
+            radius = wingspan / 2
+            center_x = (left_hand_coord[0] + right_hand_coord[0]) // 2
+            center_y = (left_hand_coord[1] + right_hand_coord[1]) // 2
 
-                additional_circles.append({"x": circle_x, "y": circle_y, "number": random_number, "visible": True})
+            # Ensure both correct numbers are included
+            numbers_to_display = [number1, number2]
+            while len(numbers_to_display) < 5:
+                rand_num = random.randint(1, 20)
+                if rand_num not in numbers_to_display:
+                    numbers_to_display.append(rand_num)
+            random.shuffle(numbers_to_display)
 
-            recorded = True  # Set the flag to avoid re-recording
+            # Arrange circles in a circle
+            num_points = 5
+            angle_step = 2 * math.pi / num_points
+            additional_circles.clear()
+            for i in range(num_points):
+                angle = i * angle_step
+                circle_x = int(center_x + radius * math.cos(angle))
+                circle_y = int(center_y + radius * math.sin(angle))
+
+                # Keep circles within frame considering the margin
+                circle_x = max(screen_margin, min(frame.shape[1] - screen_margin, circle_x))
+                circle_y = max(screen_margin, min(frame.shape[0] - screen_margin, circle_y))
+
+                additional_circles.append({
+                    "x": circle_x,
+                    "y": circle_y,
+                    "number": numbers_to_display[i],
+                    "visible": True,
+                    "timestamp": None  # Add a timestamp key
+                })
+
+            recorded = True
             game_started = True
-
-        # Draw the circles on fingertips and their numbers
-        if left_hand_coord:
-            # Draw the left hand circle
-            cv2.circle(frame, left_hand_coord, 50, (0, 0, 255), -1)  # Red circle for left hand
-            cv2.putText(frame, str(number1), (left_hand_coord[0] - 15, left_hand_coord[1] + 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-
-    # Append to additional_circles if not already added
-            if not any(circle.get("type") == "left_hand" for circle in additional_circles):
-                additional_circles.append({
-                    "x": left_hand_coord[0],
-                    "y": left_hand_coord[1],
-                    "number": number1,
-                    "visible": True,
-                    "type": "left_hand"
-                })
-
-        if right_hand_coord:
-            # Draw the right hand circle
-            cv2.circle(frame, right_hand_coord, 50, (255, 0, 0), -1)  # Blue circle for right hand
-            cv2.putText(frame, str(number2), (right_hand_coord[0] - 15, right_hand_coord[1] + 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-
-        # Append to additional_circles if not already added
-            if not any(circle.get("type") == "right_hand" for circle in additional_circles):
-                additional_circles.append({
-                    "x": right_hand_coord[0],
-                    "y": right_hand_coord[1],
-                    "number": number2,
-                    "visible": True,
-                    "type": "right_hand"
-                })
 
         # Draw additional game circles
         if game_started:
             for circle in additional_circles:
                 if circle["visible"]:
-                    cv2.circle(frame, (circle["x"], circle["y"]), circle_radius, (0, 255, 0), -1)
-                    cv2.putText(frame, str(circle["number"]),
-                                (circle["x"] - 15, circle["y"] + 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                    # Draw the circle
+                    cv2.circle(frame, (circle["x"], circle["y"]), circle_radius, circle_bg_color, -1)
 
-        # Check if hands are detected
+                    # Draw the number in white
+                    text = str(circle["number"])
+                    text_scale = 2
+                    text_thickness = 4
+                    text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, text_scale, text_thickness)[0]
+                    text_x = circle["x"] - text_size[0] // 2
+                    text_y = circle["y"] + text_size[1] // 2
+                    cv2.putText(frame, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, text_scale, text_color, text_thickness)
+
+        # Detect fingertip interaction
+        current_time = time.time()
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                # Draw landmarks on the frame
-                mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+                # Draw hand landmarks
+                mp_drawing.draw_landmarks(
+                    frame,
+                    hand_landmarks,
+                    mp_hands.HAND_CONNECTIONS,
+                    mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=5),  # Red dots
+                    mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2)  # Green connections
+                )
 
-                # Extract x, y positions of the index finger tip (Landmark 8)
                 index_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
                 x, y = int(index_finger_tip.x * frame.shape[1]), int(index_finger_tip.y * frame.shape[0])
-                cv2.circle(frame, (x, y), 10, (0, 255, 0), -1)  # Green fingertip circle
 
-                # Check if the finger touches a circle
                 for circle in additional_circles:
-                    print(circle)
                     if circle["visible"]:
-                        # Calculate Euclidean distance between the fingertip and the circle's center
-                        distance = ((circle["x"] - x) ** 2 + (circle["y"] - y) ** 2) ** 0.5
+                        # Calculate distance between fingertip and circle
+                        distance = math.sqrt((circle["x"] - x)**2 + (circle["y"] - y)**2)
                         if distance < circle_radius:
-                            # Only hide the circle if it corresponds to number1 or number2
-                            if circle["number"] in [number1, number2] and abs(x - circle["x"]) < circle_radius and abs(y - circle["y"]) < circle_radius: 
-                                cv2.putText(frame, "Correct!", (circle["x"], circle["y"] - 60),
-                                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                            if circle["number"] in [number1, number2]:
+                                if circle["timestamp"] is None:
+                                    circle["timestamp"] = current_time
+                                # Draw "Correct!" message
+                                cv2.rectangle(frame, (circle["x"] - 100, circle["y"] - 150),
+                                              (circle["x"] + 100, circle["y"] - 100), correct_bg, -1)
+                                cv2.putText(frame, "Correct!", (circle["x"] - 80, circle["y"] - 115),
+                                            cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2)
                             else:
-                                # Optional: Display a "Wrong!" message for incorrect circles
-                                cv2.putText(frame, "Wrong!", (circle["x"], circle["y"] - 60),
-                                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                                # Draw "Try Again" message
+                                cv2.rectangle(frame, (circle["x"] - 100, circle["y"] - 150),
+                                              (circle["x"] + 100, circle["y"] - 100), try_again_bg, -1)
+                                cv2.putText(frame, "Try Again", (circle["x"] - 80, circle["y"] - 115),
+                                            cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2)
+
+        # Remove "Correct" circles after 2 seconds
+        for circle in additional_circles:
+            if circle["timestamp"] and current_time - circle["timestamp"] > 1:
+                circle["visible"] = False
 
         # Show the frame
         cv2.imshow('Hand Tracking Game', frame)
@@ -178,4 +192,3 @@ with mp_hands.Hands(
 
 cap.release()
 cv2.destroyAllWindows()
-
