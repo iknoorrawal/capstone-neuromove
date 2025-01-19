@@ -1,8 +1,9 @@
+//delete this page, home.js acts as login 
 import React, { useState } from "react";
 import { auth } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { TextField, Button, Box, Typography, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { TextField, Button, Box, Typography } from "@mui/material";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -22,6 +23,70 @@ const Login = () => {
   };
 
   return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        background: "#f6f6f6",
+        padding: 2,
+      }}
+    >
+      <Box
+        sx={{
+          textAlign: "center",
+          marginBottom: 4,
+        }}
+      >
+        <Typography variant="h4">Log In</Typography>
+      </Box>
+      <Box
+        sx={{
+          maxWidth: 400,
+          width: "100%",
+          padding: 4,
+          backgroundColor: "#fff",
+          borderRadius: 2,
+          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.2)",
+        }}
+      >
+        <Box
+          component="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleLogin();
+          }}
+        >
+          <TextField
+            label="Email"
+            type="email"
+            variant="outlined"
+            fullWidth
+            sx={{ mb: 2 }}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <TextField
+            label="Password"
+            type="password"
+            variant="outlined"
+            fullWidth
+            sx={{ mb: 2 }}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          <Button type="submit" variant="contained" fullWidth>
+            Log In
+          </Button>
+        </Box>
+      </Box>
     <Box sx={{ maxWidth: 400, margin: "auto", textAlign: "center", mt: 10 }}>
       <Typography variant="h4" mb={3}>Login</Typography>
       <TextField 
@@ -62,6 +127,7 @@ const Login = () => {
       >
         Don't have an account? Sign up
       </Button>
+    </Box>
     </Box>
   );
 };

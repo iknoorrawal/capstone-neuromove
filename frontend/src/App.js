@@ -1,6 +1,7 @@
 
 // src/App.js
-import React from "react";
+import { ThemeProvider } from '@mui/material/styles';
+import theme from './theme';import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Signup from "./components/signup";
 import Login from "./components/login";
@@ -18,7 +19,7 @@ const App = () => {
         {/* Define the routes for your pages */}
         <Route path="/" element={<Home />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<Home />} />
         <Route path="/dashboard/:uid" element={<Dashboard />} />
         <Route path="/reach-and-recall/:uid/home-page" element={<ReachAndRecallLevelsPage />} />
         <Route path="/reach-and-recall/:uid/memorize/level/:level" element={<ReachAndRecallMemorize />} />
