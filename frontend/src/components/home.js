@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { auth } from "../firebase";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
 import { TextField, Button, Box, Typography, Divider } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { FcGoogle } from "react-icons/fc";
@@ -21,9 +20,12 @@ const Home = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const userId = userCredential.user.uid;
-      navigate(`/profile/${userId}`);
+      const user = userCredential.user;
+      console.log("User logged in:", userCredential.user);
+      navigate(`/dashboard/${user.uid}`);
     } catch (err) {
-      setError(err.message);
+      console.error("Login error:", err.message);
+      setError("Invalid email or password. Please try again.");
     }
   };
 
@@ -169,6 +171,23 @@ const Home = () => {
           >
             Welcome Back
           </Typography>
+          {error && (
+            <Typography
+              variant="body2"
+              color="error"
+              sx={{
+                backgroundColor: "#fdecea",
+                padding: "8px",
+                borderRadius: "4px",
+                textAlign: "center",
+                border: "1px solid #f5c2c7",
+                color: "#a94442",
+                marginBottom: "16px",
+              }}
+            >
+              {error}
+            </Typography>
+          )}
           <Box
             component="form"
             onSubmit={handleLogin}
@@ -209,19 +228,6 @@ const Home = () => {
               Log In
             </Button>
           </Box>
-          <Divider sx={{ my: 3 }}>or</Divider>
-          <Button
-            variant="outlined"
-            fullWidth
-            startIcon={<FcGoogle />}
-            sx={{
-              marginBottom: 2,
-              borderColor: "#ccc",
-              color: "#555",
-            }}
-          >
-            Sign In With Google
-          </Button>
           <Typography
             variant="body2"
             textAlign="center"

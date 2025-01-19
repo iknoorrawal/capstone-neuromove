@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { auth } from "../firebase";
-import { Link } from "react-router-dom";
+import { auth, db } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { useNavigate, Link } from "react-router-dom"; 
 import { TextField, Button, Box, Typography, Divider } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { FcGoogle } from "react-icons/fc";
@@ -9,30 +10,50 @@ import logo from "../assets/logo.png";
 import WavySeparator from "../assets/wavy-separator.svg";
 
 const Signup = () => {
-  const [formValues, setFormValues] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [dob, setDob] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const theme = useTheme();
+  const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormValues({ ...formValues, [name]: value });
-  };
+  const theme = useTheme();
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    if (formValues.password !== formValues.confirmPassword) {
+    if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
     try {
-      await createUserWithEmailAndPassword(auth, formValues.email, formValues.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       alert("Signup successful!");
+      const user = userCredential.user;
+
+    await setDoc(doc(db, "users", user.uid), {
+      firstName,
+      lastName,
+      email,
+      dob,
+      createdAt: new Date(),
+    });
+
+    await setDoc(doc(db, "users", user.uid, "game1", "info"), {
+      level: "0",
+    });
+
+    await setDoc(doc(db, "users", user.uid, "game2", "info"), {
+      level: "0",
+    });
+
+    await setDoc(doc(db, "users", user.uid, "game3", "info"), {
+      level: "0",
+    });
+
+
+      navigate(`/dashboard/${user.uid}`);
     } catch (err) {
       setError(err.message);
     }
@@ -198,8 +219,8 @@ const Signup = () => {
               variant="outlined"
               fullWidth
               required
-              value={formValues.firstName}
-              onChange={handleChange}
+              value={firstName} 
+              onChange={(e) => setFirstName(e.target.value)}
             />
             <TextField
               label="Last Name"
@@ -208,8 +229,22 @@ const Signup = () => {
               variant="outlined"
               fullWidth
               required
-              value={formValues.lastName}
-              onChange={handleChange}
+              value={lastName} 
+              onChange={(e) => setLastName(e.target.value)}
+            />
+            <TextField
+              label="Date of Birth"
+              name="dob"
+              type="date"
+              variant="outlined"
+              fullWidth
+              required
+              InputLabelProps={{ shrink: true }} 
+              value={dob} 
+              onChange={(e) => setDob(e.target.value)}
+              InputProps={{
+                style: { color: "#666" }
+              }}
             />
             <TextField
               label="Email Address"
@@ -218,8 +253,8 @@ const Signup = () => {
               variant="outlined"
               fullWidth
               required
-              value={formValues.email}
-              onChange={handleChange}
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)}
             />
             <TextField
               label="Create Password"
@@ -228,8 +263,8 @@ const Signup = () => {
               variant="outlined"
               fullWidth
               required
-              value={formValues.password}
-              onChange={handleChange}
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)}
             />
             <TextField
               label="Confirm Password"
@@ -238,9 +273,10 @@ const Signup = () => {
               variant="outlined"
               fullWidth
               required
-              value={formValues.confirmPassword}
-              onChange={handleChange}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
             />
+            {error && <Typography color="error" variant="body2" mt={2}>{error}</Typography>}
             <Button
               type="submit"
               variant="contained"
@@ -250,23 +286,11 @@ const Signup = () => {
                 "&:hover": { backgroundColor: "#003d3a" },
                 marginTop: 1.5,
               }}
+              onClick={handleSignup}
             >
               Sign Up
             </Button>
           </Box>
-          <Divider sx={{ my: 3 }}>or</Divider>
-          <Button
-            variant="outlined"
-            fullWidth
-            startIcon={<FcGoogle />}
-            sx={{
-              marginBottom: 2,
-              borderColor: "#ccc",
-              color: "#555",
-            }}
-          >
-            Sign Up With Google
-          </Button>
           <Typography
             variant="body2"
             textAlign="center"
