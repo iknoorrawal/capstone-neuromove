@@ -5,51 +5,22 @@ import { doc, getDoc } from "firebase/firestore";
 import { useNavigate, useParams } from "react-router-dom";
 import { Box, CircularProgress, Typography } from "@mui/material";
 
-const ReachAndRecallLevelsPage = () => {
+const ReachAndRecallLevelsPage = ({ user }) => {
     const navigate = useNavigate();
-    const { uid } = useParams();
-    const [loading, setLoading] = useState(true);
-    const [userData, setUserData] = useState(null);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                navigate("/login");
-                return;
-            }
-
-            if (user.uid !== uid) {
-                navigate(`/reach-and-recall/${user.uid}/home-page`);
-                return;
-            }
-
-            try {
-                const userRef = doc(db, "users", uid);
-                const userSnap = await getDoc(userRef);
-
-                if (userSnap.exists()) {
-                    setUserData(userSnap.data());
-                } else {
-                    console.log("User not found in Firestore");
-                    navigate("/login");
-                }
-            } catch (error) {
-                console.error("Error fetching user data:", error);
-                navigate("/login");
-            } finally {
-                setLoading(false);
-            }
-        });
-
-        return () => unsubscribe();
-    }, [uid, navigate]);
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+    }, [user, navigate]);
 
     const handleStartGame = () => {
-        const level = userData?.level || 1; // Default to level 1 if not set
-        navigate(`/reach-and-recall/${uid}/memorize/level/${level}`);
+        const level = user?.level || 1;
+        navigate(`/reach-and-recall/${user.uid}/memorize/level/${level}`);
     };
 
-    if (loading) {
+    if (!user) {
         return (
             <Box sx={{
                 display: "flex",

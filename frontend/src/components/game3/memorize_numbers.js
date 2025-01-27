@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { db } from "../../firebase";
+import { doc, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import {
   CircularProgress,
   Typography,
@@ -11,9 +13,9 @@ import {
   DialogActions,
 } from "@mui/material";
 
-const ReachAndRecallMemorize = () => {
-  const { uid } = useParams();
+const ReachAndRecallMemorize = ({ user }) => {
   const navigate = useNavigate();
+  const [isPolling, setIsPolling] = useState(false);
 
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -22,14 +24,17 @@ const ReachAndRecallMemorize = () => {
   const [openConfirm, setOpenConfirm] = useState(false);
 
   useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Fetching numbers from backend...');
         const response = await axios.get("http://127.0.0.1:8000/get-number");
-        console.log('Response:', response.data);
         setData(response.data);
       } catch (err) {
-        console.error('Error fetching numbers:', err);
         setError(err.message);
       }
     };
@@ -49,39 +54,69 @@ const ReachAndRecallMemorize = () => {
     return () => clearInterval(timer);
   }, [countdown]);
 
+  useEffect(() => {
+    let pollInterval;
+    
+    if (isPolling && data) {
+      const checkGameStatus = async () => {
+        try {
+          const response = await axios.post("http://127.0.0.1:8000/run-script", {
+            number1: data.number1,
+            number2: data.number2,
+          });
+          
+          if (response.data.status === 'complete') {
+            setIsPolling(false);
+            
+            // Store results in Firebase
+            try {
+              const gameResultRef = collection(db, "users", user.uid, "game3");
+              await addDoc(gameResultRef, {
+                correct_count: response.data.scores.correct,
+                incorrect_count: response.data.scores.incorrect,
+                duration: response.data.scores.duration,
+                timestamp: serverTimestamp(),
+                level: user.level || 1,
+                numbers: [data.number1, data.number2]
+              });
+            } catch (error) {
+              console.error("Error storing results:", error);
+            }
+
+            // Navigate to user-specific final score
+            navigate(`/reach-and-recall/${user.uid}/final-score`, {
+              state: {
+                correct: response.data.scores.correct,
+                incorrect: response.data.scores.incorrect,
+                duration: response.data.scores.duration,
+                uid: user.uid
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error checking game status:', error);
+        }
+      };
+
+      pollInterval = setInterval(checkGameStatus, 1000);
+    }
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [isPolling, data, navigate, user]);
+
   const handleRunScript = async () => {
     if (!data) return;
 
     try {
+      const response = await axios.post("http://127.0.0.1:8000/run-script", {
+        numbers: [data.number1, data.number2],
+        level: user.level || 1
+      });
 
-      let gameComplete = false;
-      while (!gameComplete) {
-        
-
-        const response = await axios.post("http://127.0.0.1:8000/run-script", {
-          number1: data.number1,
-          number2: data.number2,
-        });
-
-        setOutput(response.data.message || "The game will begin automatically now!");
-
-        if (response.data.status === 'complete') {
-          gameComplete = true;
-          navigate('/final-score', {
-            state: {
-              correct: response.data.scores.correct,
-              incorrect: response.data.scores.incorrect,
-              uid: uid
-            }
-          });
-        } else if (response.data.status === 'error') {
-          throw new Error(response.data.error);
-        }
-
-        // Wait a second before polling again
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-      
+      setOutput(response.data.message || "The game will begin automatically now!");
+      setIsPolling(true);
       setError(null);
     } catch (err) {
       setError("Failed to start script: " + err.message);
@@ -99,8 +134,21 @@ const ReachAndRecallMemorize = () => {
 
   const handleConfirmExit = () => {
     setOpenConfirm(false);
-    navigate(`/reach-and-recall/${uid}/home-page`);
+    navigate(`/reach-and-recall/${user?.uid}/home-page`);
   };
+
+  if (!user) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (error) {
     return <Typography color="error">Error: {error}</Typography>;

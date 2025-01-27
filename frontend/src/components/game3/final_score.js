@@ -1,12 +1,44 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import { IoStar } from "react-icons/io5";
 
-const FinalScore = () => {
+const FinalScore = ({ user }) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { correct, incorrect } = location.state || { correct: 0, incorrect: 0 };
+    
+    useEffect(() => {
+        if (!user) {
+            return; // Don't navigate immediately, wait for user to load
+        }
+        
+        if (!location.state) {
+            navigate(`/reach-and-recall/${user.uid}/home-page`);
+            return;
+        }
+        
+        // Verify the score belongs to this user
+        if (location.state.uid !== user.uid) {
+            navigate(`/reach-and-recall/${user.uid}/home-page`);
+            return;
+        }
+    }, [user, location.state, navigate]);
+
+    // Add loading state
+    if (!user || !location.state) {
+        return (
+            <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100vh' 
+            }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    const { correct, incorrect, duration } = location.state || { correct: 0, incorrect: 0, duration: 0 };
 
     // Calculate number of gold stars based on incorrect attempts
     const getGoldStars = (incorrect) => {

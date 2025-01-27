@@ -8,12 +8,13 @@ import numpy as np
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("number1", type=int, help="First number to display")
-parser.add_argument("number2", type=int, help="Second number to display")
+parser.add_argument("numbers", type=str, help="Space-separated list of numbers to find")
+parser.add_argument("level", type=int, help="Current game level")
 args = parser.parse_args()
 
-number1 = args.number1
-number2 = args.number2
+# Convert space-separated string back to list of numbers
+target_numbers = list(map(int, args.numbers.split()))
+level = args.level
 
 # Initialize MediaPipe Hands and Drawing utilities
 mp_hands = mp.solutions.hands
@@ -37,6 +38,10 @@ touch_cooldown = 1.0  # Cooldown in seconds before a circle can be counted again
 game_end_time = None  # Track when game completion starts
 end_game_delay = 3.0  # Seconds to show final screen
 
+# Game configuration
+num_points = 5  # Number of total circles
+required_correct = len(target_numbers)  # Number of correct selections needed equals number of target numbers
+
 # Initialize variables
 left_hand_coord = None
 right_hand_coord = None
@@ -50,6 +55,9 @@ circle_bg_color = (154, 105, 247)  # F7699A in BGR
 text_color = (255, 255, 255)  # White
 try_again_bg = (0, 0, 255)  # Red background
 correct_bg = (0, 255, 0)  # Green background
+
+# Add at the top with other game state variables
+game_start_time = None  # To track when gameplay actually starts
 
 # Initialize MediaPipe Hands
 with mp_hands.Hands(
@@ -71,18 +79,18 @@ with mp_hands.Hands(
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = hands.process(frame_rgb)
 
-        # Display counters in top-left corner
+        # score display in the corner
         cv2.putText(frame, f"Correct: {correct_count}", (10, 30), 
                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.putText(frame, f"Incorrect: {incorrect_count}", (10, 70), 
                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
-        # Countdown logic
+        # countdown logic
         elapsed_time = time.time() - start_time
         countdown = max(0, countdown_duration - int(elapsed_time))  # Countdown value
 
         if countdown > 0:
-            # Display the countdown on the screen
+            # countdown on the screen
             cv2.putText(frame, f"{countdown}", (frame.shape[1] // 2 - 50, frame.shape[0] // 2),
                         cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 255, 255), 6)
 
@@ -105,29 +113,30 @@ with mp_hands.Hands(
                 dy = right_hand_coord[1] - left_hand_coord[1]
                 wingspan = math.sqrt(dx**2 + dy**2)
 
-        # Generate circles after countdown ends
+        # circles after countdown ends and already not placed and valid wingspan
         if countdown == 1 and not recorded and wingspan > 0:
-            # Calculate radius and center
+            game_start_time = time.time()  # Start timing when circles appear
+            # radius half of wingspan
             radius = wingspan / 2
+            # center using midpoint of left & right hand 
             center_x = (left_hand_coord[0] + right_hand_coord[0]) // 2
             center_y = (left_hand_coord[1] + right_hand_coord[1]) // 2
 
-            # Ensure both correct numbers are included
-            numbers_to_display = [number1, number2]
-            while len(numbers_to_display) < 5:
+            # Start with target numbers and add random ones until we reach num_points
+            numbers_to_display = target_numbers.copy()
+            while len(numbers_to_display) < num_points:
                 rand_num = random.randint(1, 20)
                 if rand_num not in numbers_to_display:
                     numbers_to_display.append(rand_num)
             random.shuffle(numbers_to_display)
 
             # Arrange circles in a circle
-            num_points = 5
             angle_step = 2 * math.pi / num_points
             additional_circles.clear()
             for i in range(num_points):
-                angle = i * angle_step
-                circle_x = int(center_x + radius * math.cos(angle))
-                circle_y = int(center_y + radius * math.sin(angle))
+                angle = i * angle_step #placing at equal angular interval 
+                circle_x = int(center_x + radius * math.cos(angle)) #polar coordinate x
+                circle_y = int(center_y + radius * math.sin(angle))#polar coordinate y
 
                 # Keep circles within frame considering the margin
                 circle_x = max(screen_margin, min(frame.shape[1] - screen_margin, circle_x))
@@ -185,7 +194,7 @@ with mp_hands.Hands(
         current_time = time.time()
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                # Draw hand landmarks
+                # draw hand joints
                 mp_drawing.draw_landmarks(
                     frame,
                     hand_landmarks,
@@ -195,47 +204,52 @@ with mp_hands.Hands(
                 )
 
                 index_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
-                x, y = int(index_finger_tip.x * frame.shape[1]), int(index_finger_tip.y * frame.shape[0])
+                x, y = int(index_finger_tip.x * frame.shape[1]), int(index_finger_tip.y * frame.shape[0]) #finger tip position in pixels
 
+                #looping through all circles
                 for circle in additional_circles:
                     if circle["visible"]:
-                        # Calculate distance between fingertip and circle
+                        # distance between fingertip and circle
                         distance = math.sqrt((circle["x"] - x)**2 + (circle["y"] - y)**2)
                         circle_id = (circle["x"], circle["y"], circle["number"])
                         
+                        #checking if circle has been touched if distance is less than radius
                         if distance < circle_radius:
-                            if circle["number"] in [number1, number2] and circle["number"] not in found_numbers:
+                            if circle["number"] in target_numbers and circle["number"] not in found_numbers:
+                                #correct number found
                                 correct_count += 1
-                                found_numbers.add(circle["number"])
+                                found_numbers.add(circle["number"]) #add to found list 
                                 if circle["timestamp"] is None:
-                                    circle["timestamp"] = current_time
+                                    circle["timestamp"] = current_time #record current timestamp to display 'correct' message
                                     circle["message"] = "Correct!"
                                     circle["message_bg"] = correct_bg
-                            # Check if circle hasn't been touched or cooldown has expired
+                            #checking for cooldown (sufficient time has passed and circle hasn't been clicked recently 
+                            # to avoid infinite counts when staying on circle)
                             elif (circle["number"] not in found_numbers and 
                                   (circle_id not in touched_circles or 
-                                   current_time - touched_circles.get(circle_id, 0) > touch_cooldown)):
+                                   current_time - touched_circles.get(circle_id, 0) > touch_cooldown)): 
                                 incorrect_count += 1
-                                touched_circles[circle_id] = current_time
-                                circle["try_again_timestamp"] = current_time  # Store timestamp for try again message
+                                touched_circles[circle_id] = current_time #record current timestamp to display 'try again' message
+                                circle["try_again_timestamp"] = current_time  
 
-        # Clean up old entries from touched_circles (optional)
+        # remove old entries from touched_circles to reduce memory usage
         touched_circles = {k: v for k, v in touched_circles.items() 
                          if current_time - v <= touch_cooldown}
 
-        # Remove only "Correct" circles
+        # Remove only "Correct" circles after 2 seconds
         for circle in additional_circles:
             if circle["timestamp"] and current_time - circle["timestamp"] > 2:
                 circle["visible"] = False
 
-        # Show the frame
+        # show the frame
         cv2.imshow('Hand Tracking Game', frame)
         
         # Check for game completion
-        if correct_count >= 2:
+        if correct_count >= required_correct:
             if game_end_time is None:
                 game_end_time = time.time()
-                print(f"\nGame Complete!\nCorrect Selections: {correct_count}\nIncorrect Attempts: {incorrect_count}")
+                game_duration = round(game_end_time - game_start_time, 2)
+                print(f"\nGame Complete!\nCorrect Selections: {correct_count}\nIncorrect Attempts: {incorrect_count}\nDuration: {game_duration}")
             
             # Create a fresh frame for the completion message
             completion_frame = frame.copy()
