@@ -1,0 +1,180 @@
+.instruction-screen {
+  width: 80%; /* Reduce width slightly for better fit */
+  max-width: 900px; /* Keep it from being too wide */
+  max-height: 90vh; /* Prevent overflow */
+  padding: 40px; /* Adjust padding */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: transparent; /* Keep background transparent */
+  text-align: center;
+}
+
+.instructions-container {
+  position: relative; /* Ensures child elements can be positioned inside */
+  text-align: center;
+  padding: 20px;
+  min-height: 95vh; /* Full height */
+  width: 100vw; /* Full width */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white; /* Keep the base white */
+  overflow: hidden; /* Prevents unwanted scrollbars */
+}
+
+/* Position the background images */
+.background-top-left {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%; /* Adjust as needed */
+  height: auto;
+  z-index: 0; /* Ensure it's behind content */
+}
+
+.background-bottom-right {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 50%; /* Adjust as needed */
+  height: auto;
+  z-index: 0; /* Ensure it's behind content */
+}
+
+
+h2 {
+  color: #d63384;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.number-display span {
+  display: inline-block;
+  background: linear-gradient(45deg, #ff758c, #ff7eb3);
+  color: white;
+  font-size: 24px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  line-height: 50px;
+  margin: 5px;
+}
+
+.illustration {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 200px;  /* Ensure a visible width */
+  height: 200px; /* Ensure a visible height */
+  background-color: transparent; /* No background image */
+}
+
+.illustration img {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+button {
+  background: #d63384;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  z-index: 5;
+}
+
+button:hover {
+  background: #c02674;
+}
+
+.reaching-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.standing-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.number-bubble {
+  position: absolute;
+  left: -20%; /* Adjust to align with the hand */
+  top: 20%; /* Adjust to align with the hand */
+  background: linear-gradient(45deg, #ff758c, #ff7eb3);
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  line-height: 40px;
+  text-align: center;
+  z-index: 10;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.countdown-container {
+  position: absolute;
+  left: -15%; /* Adjust this to move it closer to the hand */
+  top: 20%; /* Fine-tune for alignment */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: translate(-10%, -60%); /* Adjust positioning to align with the hand */
+}
+
+.countdown {
+  position: absolute;
+  left: -23%; /* Center it on the hand */
+  top: 18%; /* Fine-tune */
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  line-height: 40px;
+  text-align: center;
+  z-index: 10;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.timer-text {
+  position: absolute;
+  left: 0; /* Center text inside */
+  top: 0; /* Fine-tune */
+  background: none; /* No need for a background */
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  line-height: 40px;
+  text-align: center;
+}
+
+.countdown-hidden,
+.number-bubble-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
