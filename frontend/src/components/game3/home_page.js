@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { auth, db } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { useNavigate, useParams } from "react-router-dom";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { Box, Typography, Button, CircularProgress } from "@mui/material";
 
 const ReachAndRecallLevelsPage = ({ user }) => {
     const navigate = useNavigate();
@@ -15,8 +15,7 @@ const ReachAndRecallLevelsPage = ({ user }) => {
         }
     }, [user, navigate]);
 
-    const handleStartGame = () => {
-        const level = user?.level || 1;
+    const handleStartGame = (level) => {
         navigate(`/reach-and-recall/${user.uid}/memorize/level/${level}`);
     };
 
@@ -33,37 +32,61 @@ const ReachAndRecallLevelsPage = ({ user }) => {
         );
     }
 
+    const levels = [
+        { level: 1, description: "5 bubbles, find 2 numbers (1-20)" },
+        { level: 2, description: "8 bubbles, find 3 numbers (1-50)" },
+        { level: 3, description: "10 bubbles, find 4 numbers (1-100)" }
+    ];
+
     return (
         <Box sx={{
             display: "flex",
-            justifyContent: "center",
+            flexDirection: "column",
             alignItems: "center",
-            height: "100vh",
+            justifyContent: "center",
+            minHeight: "100vh",
+            gap: 3,
+            padding: 3,
+            background: "linear-gradient(180deg, #ff9aa2 0%, #ffb1c1 100%)",
         }}>
-            <Box
-                sx={{
-                    backgroundColor: "#F0F0F0",
-                    borderRadius: 3,
-                    p: 3,
-                    maxWidth: 350,
-                    minHeight: 180,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    cursor: "pointer",
-                    transition: "transform 0.3s ease-in-out",
-                    "&:hover": {
-                        transform: "scale(1.05)",
-                    },
-                }}
-                onClick={handleStartGame}
-            >
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
-                    Start Game
-                </Typography>
-                <Typography variant="body1" sx={{ textAlign: "center", color: "#555" }}>
-                    Click to begin the Reach & Recall memory challenge!
-                </Typography>
+            <Typography variant="h4" sx={{ mb: 4, color: "#fff", textAlign: "center" }}>
+                Select a Level
+            </Typography>
+
+            <Box sx={{ 
+                display: "flex", 
+                flexDirection: "column", 
+                gap: 2,
+                width: "100%",
+                maxWidth: 400 
+            }}>
+                {levels.map((levelInfo) => (
+                    <Button
+                        key={levelInfo.level}
+                        variant="contained"
+                        onClick={() => handleStartGame(levelInfo.level)}
+                        sx={{
+                            backgroundColor: "#fff",
+                            color: "#FF6B6B",
+                            padding: 2,
+                            borderRadius: 2,
+                            '&:hover': {
+                                backgroundColor: "#FFE5E5",
+                            },
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: 1
+                        }}
+                    >
+                        <Typography variant="h6">
+                            Level {levelInfo.level}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            {levelInfo.description}
+                        </Typography>
+                    </Button>
+                ))}
             </Box>
         </Box>
     );
