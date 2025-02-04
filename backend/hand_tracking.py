@@ -5,16 +5,17 @@ import time
 import random
 import math
 import numpy as np
+from config import calculate_score  # Remove the dot
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("numbers", type=str, help="Space-separated list of numbers to find")
-parser.add_argument("level", type=int, help="Current game level")
+parser.add_argument("config", type=str, help="Space-separated total_bubbles max_range level")
 args = parser.parse_args()
 
-# Convert space-separated string back to list of numbers
+# Convert space-separated strings to appropriate types
 target_numbers = list(map(int, args.numbers.split()))
-level = args.level
+total_bubbles, max_range, level = map(int, args.config.split())  # Parse level from config
 
 # Initialize MediaPipe Hands and Drawing utilities
 mp_hands = mp.solutions.hands
@@ -39,8 +40,8 @@ game_end_time = None  # Track when game completion starts
 end_game_delay = 3.0  # Seconds to show final screen
 
 # Game configuration
-num_points = 5  # Number of total circles
-required_correct = len(target_numbers)  # Number of correct selections needed equals number of target numbers
+num_points = total_bubbles  # Total number of bubbles to display
+required_correct = len(target_numbers)  # Number of correct selections needed
 
 # Initialize variables
 left_hand_coord = None
@@ -115,17 +116,15 @@ with mp_hands.Hands(
 
         # circles after countdown ends and already not placed and valid wingspan
         if countdown == 1 and not recorded and wingspan > 0:
-            game_start_time = time.time()  # Start timing when circles appear
-            # radius half of wingspan
+            game_start_time = time.time()
             radius = wingspan / 2
-            # center using midpoint of left & right hand 
             center_x = (left_hand_coord[0] + right_hand_coord[0]) // 2
             center_y = (left_hand_coord[1] + right_hand_coord[1]) // 2
 
-            # Start with target numbers and add random ones until we reach num_points
+            # Start with target numbers and add random ones until we reach total_bubbles
             numbers_to_display = target_numbers.copy()
-            while len(numbers_to_display) < num_points:
-                rand_num = random.randint(1, 20)
+            while len(numbers_to_display) < total_bubbles:
+                rand_num = random.randint(1, max_range)
                 if rand_num not in numbers_to_display:
                     numbers_to_display.append(rand_num)
             random.shuffle(numbers_to_display)
@@ -211,7 +210,7 @@ with mp_hands.Hands(
                     if circle["visible"]:
                         # distance between fingertip and circle
                         distance = math.sqrt((circle["x"] - x)**2 + (circle["y"] - y)**2)
-                        circle_id = (circle["x"], circle["y"], circle["number"])
+                        circle_id = f"{circle['x']}_{circle['y']}"
                         
                         #checking if circle has been touched if distance is less than radius
                         if distance < circle_radius:
@@ -219,10 +218,9 @@ with mp_hands.Hands(
                                 #correct number found
                                 correct_count += 1
                                 found_numbers.add(circle["number"]) #add to found list 
-                                if circle["timestamp"] is None:
-                                    circle["timestamp"] = current_time #record current timestamp to display 'correct' message
-                                    circle["message"] = "Correct!"
-                                    circle["message_bg"] = correct_bg
+                                circle["timestamp"] = current_time #record current timestamp to display 'correct' message
+                                circle["message"] = "Correct!"
+                                circle["message_bg"] = correct_bg
                             #checking for cooldown (sufficient time has passed and circle hasn't been clicked recently 
                             # to avoid infinite counts when staying on circle)
                             elif (circle["number"] not in found_numbers and 
@@ -249,47 +247,48 @@ with mp_hands.Hands(
             if game_end_time is None:
                 game_end_time = time.time()
                 game_duration = round(game_end_time - game_start_time, 2)
-                print(f"\nGame Complete!\nCorrect Selections: {correct_count}\nIncorrect Attempts: {incorrect_count}\nDuration: {game_duration}")
+                score = calculate_score(incorrect_count, level)
+                print(f"\nGame Complete!\nCorrect Selections: {correct_count}\nIncorrect Attempts: {incorrect_count}\nDuration: {game_duration}\nScore: {score}")
             
-            # Create a fresh frame for the completion message
-            completion_frame = frame.copy()
-            height, width = completion_frame.shape[:2]
-            
-            # Create dark overlay
-            overlay = np.zeros((height, width, 3), dtype=np.uint8)
-            cv2.addWeighted(overlay, 0.7, completion_frame, 0.3, 0, completion_frame)  # Darker overlay
-            
-            # Draw completion message
-            message = "Game Complete!"
-            sub_message = "Go back to browser"
-            
-            # Main message
-            font_scale = 2
-            thickness = 3
-            text_size = cv2.getTextSize(message, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)[0]
-            text_x = (width - text_size[0]) // 2
-            text_y = height // 2
-            
-            cv2.putText(completion_frame, message,
-                      (text_x, text_y),
-                      cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), thickness)
-            
-            # Sub message
-            font_scale_sub = 1
-            text_size_sub = cv2.getTextSize(sub_message, cv2.FONT_HERSHEY_SIMPLEX, font_scale_sub, thickness)[0]
-            text_x_sub = (width - text_size_sub[0]) // 2
-            
-            cv2.putText(completion_frame, sub_message,
-                      (text_x_sub, text_y + 50),
-                      cv2.FONT_HERSHEY_SIMPLEX, font_scale_sub, (255, 255, 255), 2)
-            
-            # Show completion frame
-            cv2.imshow('Hand Tracking Game', completion_frame)
-            cv2.waitKey(1)  # Important: Update the window
-            
-            # Close after 5 seconds
-            if time.time() - game_end_time >= 5.0:  # Changed to 5 seconds
+            # Show completion message for 5 seconds
+            if current_time - game_end_time <= 5.0:
+                # Create a fresh frame for the completion message
+                completion_frame = frame.copy()
+                height, width = completion_frame.shape[:2]
+                
+                # Create dark overlay
+                overlay = np.zeros((height, width, 3), dtype=np.uint8)
+                cv2.addWeighted(overlay, 0.7, completion_frame, 0.3, 0, completion_frame)
+                
+                # Draw completion message
+                message = "Game Complete!"
+                sub_message = "Go back to browser"
+                
+                # Main message
+                font_scale = 2
+                thickness = 3
+                text_size = cv2.getTextSize(message, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)[0]
+                text_x = (width - text_size[0]) // 2
+                text_y = height // 2
+                
+                cv2.putText(completion_frame, message,
+                          (text_x, text_y),
+                          cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), thickness)
+                
+                # Sub message
+                font_scale_sub = 1
+                text_size_sub = cv2.getTextSize(sub_message, cv2.FONT_HERSHEY_SIMPLEX, font_scale_sub, thickness)[0]
+                text_x_sub = (width - text_size_sub[0]) // 2
+                
+                cv2.putText(completion_frame, sub_message,
+                          (text_x_sub, text_y + 50),
+                          cv2.FONT_HERSHEY_SIMPLEX, font_scale_sub, (255, 255, 255), 2)
+                
+                cv2.imshow('Hand Tracking Game', completion_frame)
+            else:
                 break
+
+            cv2.waitKey(1)
             
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
