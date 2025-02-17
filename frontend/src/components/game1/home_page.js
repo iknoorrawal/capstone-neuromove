@@ -59,8 +59,6 @@ const BalanceQuestLevelsPage = () => {
         );
     }
 
-    const level = userData?.level;
-
     return (
         <Box
             sx={{
@@ -86,7 +84,7 @@ const BalanceQuestLevelsPage = () => {
                         transform: "scale(1.05)",
                     },
                 }}
-                onClick={() => navigate(`/balance-quest/${uid}/game/level/${level}`)}
+                onClick={() => navigate(`/balance-quest/${uid}/game/level/0`)}
             >
                 <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
                     Start Game

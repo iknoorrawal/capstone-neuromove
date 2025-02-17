@@ -8,10 +8,11 @@ import Signup from "./components/signup";
 import Login from "./components/login";
 import Home from "./components/home";
 import Dashboard from "./components/dashboard";
-import ReachAndRecallLevelsPage from "./components/game3/home_page"
-import ReachAndRecallMemorize from "./components/game3/memorize_numbers"
-import BalanceQuest from "./components/game1/game_logic"
+import ReachAndRecallLevelsPage from "./components/game3/home_page";
+import ReachAndRecallMemorize from "./components/game3/memorize_numbers";
+import BalanceQuest from "./components/game1/game_logic";
 import FinalScore from './components/game3/final_score';
+import BalanceQuestLevelsPage from "./components/game1/home_page";
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -46,7 +47,8 @@ const App = () => {
         <Route path="/reach-and-recall/:uid/home-page" element={<ReachAndRecallLevelsPage user={user} />} />
         <Route path="/reach-and-recall/:uid/memorize/level/:level" element={<ReachAndRecallMemorize user={user} />} />
         <Route path="/reach-and-recall/:uid/final-score" element={<FinalScore user={user} />} />
-        <Route path="/game1-test" element={<BalanceQuest />} />
+        <Route path="/balance-quest/:uid/home-page" element={<BalanceQuestLevelsPage user={user} />} />
+        <Route path="/balance-quest/:uid/game/level/:level" element={<BalanceQuest user={user} />} />
       </Routes>
     </Router>   
   );
