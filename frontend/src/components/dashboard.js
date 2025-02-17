@@ -190,6 +190,19 @@ const Dashboard = () => {
             px: 2, // Add padding for responsiveness
           }}
         >
+          <Grid2 
+            item 
+            xs={12} 
+            md={4} 
+            onClick={() => navigate(`/balance-quest/${uid}/home-page`)}
+            sx={{
+              cursor: 'pointer',
+              transition: 'transform 0.3s ease-in-out',
+              '&:hover': { 
+                transform: 'scale(1.05)',
+              }
+            }}
+          >
           <GameCard
             title="Balance Quest"
             level={`Level ${level}`}
@@ -197,6 +210,7 @@ const Dashboard = () => {
             bgColor="orange"
             image="/balancequest.png" // Replace with your image URL
           />
+          </Grid2>
           <GameCard
             title="Beat Step"
             level={`Level ${level}`}

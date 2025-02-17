@@ -2,6 +2,7 @@ import random
 import subprocess
 from fastapi import Body, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from BalanceQuest.constants import Faces, Flags, Foods, Fruits, Animals, HandSymbols, Nature, Sports, Clothing
 
 app = FastAPI()
 
@@ -82,3 +83,59 @@ async def generate_random_number():
     number2 = random.randint(1, 20)
     return {"number1": number1, "number2": number2}
 
+
+CATEGORIES = {
+    "Flags": Flags,
+    "Sports": Sports,
+    "Clothing": Clothing,
+    "Fruits": Fruits,
+    "Animals": Animals,
+    "Nature": Nature,
+    "Foods": Foods,
+    "HandSymbols": HandSymbols,
+    "Faces": Faces,
+}
+
+@app.get("/game")
+async def get_game_data():
+    """
+    Returns a JSON object containing:
+      - 3 initial emojis from one randomly chosen category (unknown to the frontend).
+      - 10 emojis to guess from (some from the chosen category, some from others),
+        each labeled with inGroup = True or False.
+    """
+    category_name = random.choice(list(CATEGORIES.keys()))
+    category_emojis = CATEGORIES[category_name]
+    initial_emojis = random.sample(category_emojis, 3)
+    in_group_count = random.randint(3, 4)
+
+    remaining_in_category = [x for x in category_emojis if x not in initial_emojis]
+    in_group_emojis = random.sample(remaining_in_category, in_group_count)
+
+    other_categories_emojis = []
+    for cat, emojis in CATEGORIES.items():
+        if cat != category_name:
+            other_categories_emojis.extend(emojis)
+
+    out_group_count = 10 - in_group_count
+    out_group_emojis = random.sample(other_categories_emojis, out_group_count)
+
+    guess_emojis_raw = in_group_emojis + out_group_emojis
+    random.shuffle(guess_emojis_raw)
+
+    guess_emojis = []
+    for (name, emoji) in guess_emojis_raw:
+        # If (name, emoji) is in in_group_emojis, it's in the same category
+        in_group_flag = (name, emoji) in in_group_emojis
+        guess_emojis.append({
+            "name": name,
+            "emoji": emoji,
+            "inGroup": in_group_flag
+        })
+
+    initial_emojis_data = [{"name": name, "emoji": emoji} for (name, emoji) in initial_emojis]
+
+    return {
+        "initialEmojis": initial_emojis_data,
+        "guessEmojis": guess_emojis
+    }
