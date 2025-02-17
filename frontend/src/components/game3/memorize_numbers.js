@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { db } from "../../firebase";
 import { doc, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import {
@@ -12,8 +12,10 @@ import {
   DialogTitle,
   DialogActions,
 } from "@mui/material";
+import { calculateScore } from './game_config';
 
 const ReachAndRecallMemorize = ({ user }) => {
+  const { level } = useParams();
   const navigate = useNavigate();
   const [isPolling, setIsPolling] = useState(false);
 
@@ -32,14 +34,16 @@ const ReachAndRecallMemorize = ({ user }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:8000/get-number");
+        const response = await axios.get("http://127.0.0.1:8000/get-number", {
+          params: { level: parseInt(level) || 1 }
+        });
         setData(response.data);
       } catch (err) {
         setError(err.message);
       }
     };
     fetchData();
-  }, []);
+  }, [level]);
 
   useEffect(() => {
     if (countdown <= 0) {
@@ -60,10 +64,13 @@ const ReachAndRecallMemorize = ({ user }) => {
     if (isPolling && data) {
       const checkGameStatus = async () => {
         try {
+          console.log("Polling game status..."); // Debug log
           const response = await axios.post("http://127.0.0.1:8000/run-script", {
-            number1: data.number1,
-            number2: data.number2,
+            numbers: data.numbers,
+            level: parseInt(level) || 1
           });
+          
+          console.log("Poll response:", response.data); // Debug log
           
           if (response.data.status === 'complete') {
             setIsPolling(false);
@@ -76,19 +83,21 @@ const ReachAndRecallMemorize = ({ user }) => {
                 incorrect_count: response.data.scores.incorrect,
                 duration: response.data.scores.duration,
                 timestamp: serverTimestamp(),
-                level: user.level || 1,
-                numbers: [data.number1, data.number2]
+                level: parseInt(level) || 1,
+                numbers: data.numbers,
+                score: calculateScore(response.data.scores.incorrect, parseInt(level) || 1)
               });
             } catch (error) {
               console.error("Error storing results:", error);
             }
 
-            // Navigate to user-specific final score
             navigate(`/reach-and-recall/${user.uid}/final-score`, {
               state: {
                 correct: response.data.scores.correct,
                 incorrect: response.data.scores.incorrect,
                 duration: response.data.scores.duration,
+                level: parseInt(level) || 1,
+                numbers: data.numbers,
                 uid: user.uid
               }
             });
@@ -104,17 +113,19 @@ const ReachAndRecallMemorize = ({ user }) => {
     return () => {
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [isPolling, data, navigate, user]);
+  }, [isPolling, data, navigate, user, level]);
 
   const handleRunScript = async () => {
     if (!data) return;
 
     try {
+      console.log("Starting game..."); // Debug log
       const response = await axios.post("http://127.0.0.1:8000/run-script", {
-        numbers: [data.number1, data.number2],
-        level: user.level || 1
+        numbers: data.numbers,
+        level: parseInt(level) || 1
       });
 
+      console.log("Initial response:", response.data); // Debug log
       setOutput(response.data.message || "The game will begin automatically now!");
       setIsPolling(true);
       setError(null);
@@ -225,8 +236,8 @@ const ReachAndRecallMemorize = ({ user }) => {
         Remember the following numbers on the screen
       </Typography>
 
-      <Box sx={{ display: "flex", gap: 4, mb: 3 }}>
-        {[data.number1, data.number2].map((num, index) => (
+      <Box sx={{ display: "flex", gap: 4, mb: 3, flexWrap: "wrap", justifyContent: "center" }}>
+        {data.numbers.map((num, index) => (
           <Box
             key={index}
             sx={{
@@ -237,6 +248,7 @@ const ReachAndRecallMemorize = ({ user }) => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              margin: 1
             }}
           >
             <Typography variant="h3" sx={{ color: "#000", fontWeight: "bold" }}>
