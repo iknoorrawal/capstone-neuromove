@@ -44,15 +44,13 @@ function BalanceQuest() {
   
   // Arduino WebSocket connection state
   const [isConnected, setIsConnected] = useState(false);
-  const [forceData, setForceData] = useState({ 
-    left: 0, 
-    right: 0,
-    left_pressed: false,
-    right_pressed: false 
+  const [forceData, setForceData] = useState({
+    left: 0,
+    right: 0
   });
+  const cooldownRef = useRef(false);
   const [lastPress, setLastPress] = useState(null);
   const socketRef = useRef(null);
-  const cooldownRef = useRef(false);
   
   // Connect to the WebSocket server
   useEffect(() => {
@@ -203,6 +201,62 @@ function BalanceQuest() {
     navigate(`/balance-quest/${uid}/home-page`);
   };
 
+  // Add force sensor polling
+  useEffect(() => {
+    let intervalId;
+
+    const pollSensorData = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/sensor-data');
+        const newForceData = response.data;
+        setForceData(newForceData);
+
+        // Check for force sensor presses if game is active
+        if (!cooldownRef.current && !done && !showInitial && gameData) {
+          const THRESHOLD = 500; // Sensor is pressed when value goes below this
+          
+          // Left sensor = In Category
+          if (newForceData.left < THRESHOLD && lastPress !== "left") {
+            console.log('Left sensor pressed - In Category');
+            cooldownRef.current = true;
+            setLastPress("left");
+            handleGuess(true);  // In category
+            
+            // Only clear cooldown when sensor is released
+            const checkRelease = setInterval(() => {
+              if (forceData.left >= THRESHOLD) {
+                cooldownRef.current = false;
+                clearInterval(checkRelease);
+              }
+            }, 100);
+          }
+          
+          // Right sensor = Not In Category
+          if (newForceData.right < THRESHOLD && lastPress !== "right") {
+            console.log('Right sensor pressed - Not In Category');
+            cooldownRef.current = true;
+            setLastPress("right");
+            handleGuess(false);  // Not in category
+            
+            // Only clear cooldown when sensor is released
+            const checkRelease = setInterval(() => {
+              if (forceData.right >= THRESHOLD) {
+                cooldownRef.current = false;
+                clearInterval(checkRelease);
+              }
+            }, 100);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching sensor data:', error);
+      }
+    };
+
+    // Poll every 100ms for responsive controls
+    intervalId = setInterval(pollSensorData, 100);
+    return () => clearInterval(intervalId);
+  }, [done, showInitial, lastPress, gameData, handleGuess]);
+
   if (error) {
     return (
       <div style={{ textAlign: "center", marginTop: "50px" }}>
@@ -305,33 +359,66 @@ function BalanceQuest() {
   const strokeDashoffset = circumference * (1 - fraction);
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100vh',
-      background: '#f5f5f5'
+    <div style={{
+      textAlign: "center",
+      marginTop: "50px",
+      fontFamily: "sans-serif",
+      position: "relative",
     }}>
-      <Box sx={{ 
-        background: 'rgba(255, 255, 255, 0.9)',
-        padding: 3,
-        borderRadius: 2,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      {ExitButtonAndDialog}
+
+      <h1 style={{ color: "#A0522D" }}>Use Force Sensors to Select</h1>
+
+      <div style={{ marginBottom: "20px" }}>
+        <p>Left Sensor = In Category</p>
+        <p>Right Sensor = Not In Category</p>
+      </div>
+
+      <div style={{
+        position: "relative",
+        width: "150px",
+        height: "150px",
+        margin: "40px auto",
       }}>
-        <Typography variant="h6" gutterBottom>
-            Force Sensor Debug
-        </Typography>
-        <Typography>
-            Status: {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
-        </Typography>
-        <Typography>
-            Left Pressed: {forceData.left_pressed ? '✅' : '❌'}
-        </Typography>
-        <Typography>
-            Right Pressed: {forceData.right_pressed ? '✅' : '❌'}
-        </Typography>
-      </Box>
-    </Box>
+        <svg width="150" height="150">
+          <circle
+            cx="75"
+            cy="75"
+            r={radius}
+            fill="none"
+            stroke="#A0522D"
+            strokeWidth="10"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+          />
+        </svg>
+
+        <div style={{
+          position: "absolute",
+          top: "0",
+          left: "0",
+          width: "150px",
+          height: "150px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "5rem",
+        }}>
+          {currentGuess?.emoji}
+        </div>
+      </div>
+
+      {/* Force sensor readings */}
+      <div style={{ marginTop: "20px", fontSize: "1.1rem" }}>
+        <p>Left Sensor: {forceData.left?.toFixed(1) || 0}</p>
+        <p>Right Sensor: {forceData.right?.toFixed(1) || 0}</p>
+      </div>
+
+      <p style={{ marginTop: "30px", fontSize: "1.1rem" }}>
+        Score: {score} / {guessIndex} &nbsp;|&nbsp; Time left: {guessTimer}s
+      </p>
+    </div>
   );
 }
 

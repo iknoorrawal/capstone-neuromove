@@ -1,9 +1,14 @@
 import random
 import subprocess
-from fastapi import Body, FastAPI
+from fastapi import Body, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List, Optional
 from BalanceQuest.constants import Faces, Flags, Foods, Fruits, Animals, HandSymbols, Nature, Sports, Clothing
 from config import get_level_config
+import serial
+import uvicorn
+import time
 
 app = FastAPI()
 
@@ -20,6 +25,14 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
 )
+
+# Initialize Arduino connection
+try:
+    arduino = serial.Serial('/dev/cu.usbserial-1120', 9600, timeout=1)
+    print("✅ Successfully connected to Arduino")
+except Exception as e:
+    print(f"❌ Failed to connect to Arduino: {e}")
+    arduino = None
 
 class GameProcess:
     def __init__(self):
@@ -112,7 +125,6 @@ async def generate_random_number():
     number2 = random.randint(1, 20)
     return {"number1": number1, "number2": number2}
 
-
 CATEGORIES = {
     "Flags": Flags,
     "Sports": Sports,
@@ -126,45 +138,85 @@ CATEGORIES = {
 }
 
 @app.get("/game")
-async def get_game_data():
-    """
-    Returns a JSON object containing:
-      - 3 initial emojis from one randomly chosen category (unknown to the frontend).
-      - 10 emojis to guess from (some from the chosen category, some from others),
-        each labeled with inGroup = True or False.
-    """
-    category_name = random.choice(list(CATEGORIES.keys()))
-    category_emojis = CATEGORIES[category_name]
+async def get_game():
+    # Select a random category
+    category = random.choice(list(CATEGORIES.items()))
+    category_name, category_emojis = category
+    
+    # Select 3 random emojis from the category for initial display
     initial_emojis = random.sample(category_emojis, 3)
-    in_group_count = random.randint(3, 4)
-
-    remaining_in_category = [x for x in category_emojis if x not in initial_emojis]
-    in_group_emojis = random.sample(remaining_in_category, in_group_count)
-
-    other_categories_emojis = []
-    for cat, emojis in CATEGORIES.items():
-        if cat != category_name:
-            other_categories_emojis.extend(emojis)
-
-    out_group_count = 10 - in_group_count
-    out_group_emojis = random.sample(other_categories_emojis, out_group_count)
-
-    guess_emojis_raw = in_group_emojis + out_group_emojis
-    random.shuffle(guess_emojis_raw)
-
-    guess_emojis = []
-    for (name, emoji) in guess_emojis_raw:
-        # If (name, emoji) is in in_group_emojis, it's in the same category
-        in_group_flag = (name, emoji) in in_group_emojis
-        guess_emojis.append({
-            "name": name,
-            "emoji": emoji,
-            "inGroup": in_group_flag
-        })
-
-    initial_emojis_data = [{"name": name, "emoji": emoji} for (name, emoji) in initial_emojis]
-
+    
+    # Create list of all emojis for guessing
+    all_emojis = []
+    
+    # Add 6 emojis from the chosen category (marked as inGroup=True)
+    category_selections = random.sample(category_emojis, 6)
+    for emoji in category_selections:
+        all_emojis.append({"emoji": emoji, "inGroup": True})
+    
+    # Add 6 emojis NOT from the chosen category (marked as inGroup=False)
+    other_emojis = []
+    for other_category, other_emojis in CATEGORIES.items():
+        if other_category != category_name:
+            other_emojis.extend(other_emojis)
+    
+    non_category_selections = random.sample(other_emojis, 6)
+    for emoji in non_category_selections:
+        all_emojis.append({"emoji": emoji, "inGroup": False})
+    
+    # Shuffle the combined list
+    random.shuffle(all_emojis)
+    
+    # Create initial emojis list (without inGroup property)
+    initial_emoji_objects = [{"emoji": emoji} for emoji in initial_emojis]
+    
     return {
-        "initialEmojis": initial_emojis_data,
-        "guessEmojis": guess_emojis
+        "guessEmojis": all_emojis,
+        "initialEmojis": initial_emoji_objects
     }
+
+# Arduino data reading function
+def get_latest_arduino_data():
+    """Get the most recent data from Arduino"""
+    if not arduino:
+        return 0, 0
+
+    # Clear old data
+    arduino.flushInput()
+    
+    try:
+        # Read the latest line
+        line = arduino.readline().decode().strip()
+        print(f"Arduino data: {line}")  # Debug print
+        
+        # Parse the values
+        values = line.split()
+        if len(values) == 2:
+            return float(values[0]), float(values[1])
+    except Exception as e:
+        print(f"Error reading Arduino: {e}")
+    
+    return 0, 0
+
+# Arduino sensor data endpoint
+@app.get("/sensor-data")
+async def get_sensor_data():
+    left, right = get_latest_arduino_data()
+    return {
+        "left": left,
+        "right": right,
+        "status": "success"
+    }
+
+# Health check endpoint
+@app.get("/")
+async def root():
+    return {
+        "status": "running",
+        "arduino_connected": arduino is not None,
+        "arduino_waiting": arduino.in_waiting if arduino else 0
+    }
+
+if __name__ == "__main__":
+    print("🚀 Starting server on http://localhost:8000")
+    uvicorn.run(app, host="127.0.0.1", port=8000)
