@@ -1,0 +1,49 @@
+.instructions-complete-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #f7e0c4, #fff);
+    text-align: center;
+}
+
+.instructions-complete-text {
+    font-size: 24px;
+    font-weight: bold;
+    color: #B45522;
+    margin-bottom: 20px;
+}
+
+.instructions-buttons {
+    display: flex;
+    gap: 20px;
+}
+
+.repeat-button, .play-button {
+    font-size: 18px;
+    padding: 10px 20px;
+    border: 2px solid #B45522;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+}
+
+.repeat-button {
+    background: white;
+    color: #B45522;
+}
+
+.repeat-button:hover {
+    background: #B45522;
+    color: white;
+}
+
+.play-button {
+    background: #B45522;
+    color: white;
+}
+
+.play-button:hover {
+    background: #8b3f18;
+}
