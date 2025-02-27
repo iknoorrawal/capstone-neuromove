@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from "react";
 import "./game-3-instructions.css";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
+import { useNavigate, useParams } from "react-router-dom";
 
-const Game3Instructions = ({ onComplete }) => {
+const Game3Instructions = ( {onComplete}) => {
+  const { uid, level } = useParams(); // Get user ID & level from URL
+  const navigate = useNavigate();
+
   const [step, setStep] = useState(0);
   const [countdown, setCountdown] = useState(3); 
 
   const nextStep = () => {
-    if (step < 4) {
+    if (step < 3) {
       setStep(step + 1);
     } else {
-      onComplete();
+      navigate(`/reach-and-recall/${uid}/memorize/level/${level}`);
     }
   };
 

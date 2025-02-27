@@ -222,7 +222,7 @@ const Dashboard = () => {
             item 
             xs={12} 
             md={4} 
-            onClick={() => navigate(`/reach-and-recall/${uid}/instructions`)}  // ✅ Navigates to instructions instead
+            onClick={() => navigate(`/reach-and-recall/${uid}/home-page`)} 
             sx={{
               cursor: 'pointer',
               transition: 'transform 0.3s ease-in-out',

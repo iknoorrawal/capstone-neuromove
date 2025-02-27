@@ -16,7 +16,8 @@ const ReachAndRecallLevelsPage = ({ user }) => {
     }, [user, navigate]);
 
     const handleStartGame = (level) => {
-        navigate(`/reach-and-recall/${user.uid}/memorize/level/${level}`);
+        navigate(`/reach-and-recall/${user.uid}/instructions/level/${level}`);
+       // navigate(`/reach-and-recall/${user.uid}/memorize/level/${level}`);
     };
 
     if (!user) {
