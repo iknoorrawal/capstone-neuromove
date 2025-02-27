@@ -222,7 +222,7 @@ const Dashboard = () => {
             item 
             xs={12} 
             md={4} 
-            onClick={() => navigate(`/reach-and-recall/${uid}/home-page`)}
+            onClick={() => navigate(`/reach-and-recall/${uid}/instructions`)}  // ✅ Navigates to instructions instead
             sx={{
               cursor: 'pointer',
               transition: 'transform 0.3s ease-in-out',
@@ -231,14 +231,15 @@ const Dashboard = () => {
               }
             }}
           >
-          <GameCard
-            title="Reach & Recall"
-            level={`Level ${level}`}
-            description="Improve flexibility and memory by reaching and recalling items."
-            bgColor="pink"
-            image="/reachrecall.png" // Replace with your image URL
-          />
+            <GameCard
+              title="Reach & Recall"
+              level={`Level ${level}`}
+              description="Improve flexibility and memory by reaching and recalling items."
+              bgColor="pink"
+              image="/reachrecall.png"
+            />
           </Grid2>
+
         </Box>
       </Box>
     </Box>
