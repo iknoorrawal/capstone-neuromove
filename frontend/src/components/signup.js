@@ -39,19 +39,6 @@ const Signup = () => {
       createdAt: new Date(),
     });
 
-    await setDoc(doc(db, "users", user.uid, "game1", "info"), {
-      level: "0",
-    });
-
-    await setDoc(doc(db, "users", user.uid, "game2", "info"), {
-      level: "0",
-    });
-
-    await setDoc(doc(db, "users", user.uid, "game3", "info"), {
-      level: "0",
-    });
-
-
       navigate(`/dashboard/${user.uid}`);
     } catch (err) {
       setError(err.message);
