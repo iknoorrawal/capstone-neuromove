@@ -13,6 +13,7 @@ import ReachAndRecallMemorize from "./components/game3/memorize_numbers";
 import BalanceQuest from "./components/game1/game_logic";
 import FinalScore from './components/game3/final_score';
 import BalanceQuestLevelsPage from "./components/game1/home_page";
+import ArduinoTest from './components/ArduinoTest';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -49,6 +50,7 @@ const App = () => {
         <Route path="/reach-and-recall/:uid/final-score" element={<FinalScore user={user} />} />
         <Route path="/balance-quest/:uid/home-page" element={<BalanceQuestLevelsPage user={user} />} />
         <Route path="/balance-quest/:uid/game/level/:level" element={<BalanceQuest user={user} />} />
+        <Route path="/testing-arduino" element={<ArduinoTest />} />
       </Routes>
     </Router>   
   );
