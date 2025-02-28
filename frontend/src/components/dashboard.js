@@ -13,7 +13,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore"; // Add updateDoc and Timestamp
+import { doc, getDoc, updateDoc, Timestamp, setDoc } from "firebase/firestore"; // Add updateDoc and Timestamp
 
 const Dashboard = () => {
   const { uid } = useParams();
@@ -36,38 +36,40 @@ const Dashboard = () => {
       }
 
       try {
-        const userRef = doc(db, "users", uid); //gets user from userid with if statements
+        const userRef = doc(db, "users", uid);
         const userSnap = await getDoc(userRef);
 
         if (userSnap.exists()) {
           const userData = userSnap.data();
-
-          // Streak Logic
-          const lastLogin = userData.lastLogin?.toDate(); // Convert Firestore timestamp to JavaScript Date
           const currentTime = new Date();
-          const timeDifference = (currentTime - lastLogin) / (1000 * 60); // Convert to hours
-
-          let updatedStreak = userData.streaks;
+          const lastLogin = userData.lastLogin?.toDate();
+          const timeDifference = lastLogin ? (currentTime - lastLogin) / (1000 * 60) : 0;
+          let updatedStreak = userData.streaks || 0;
 
           if (timeDifference >= 24 && timeDifference <= 48) {
-
-          //if (timeDifference >= 24 && timeDifference <= 48) {
-            updatedStreak += 1; // Increase streak
+            updatedStreak += 1;
           } else if (timeDifference > 48) {
-            updatedStreak = 0; // Reset streak
+            updatedStreak = 0;
           }
-  
-          // Update Firestore with new streak and lastLogin
+
           await updateDoc(userRef, {
             streaks: updatedStreak,
             lastLogin: Timestamp.fromDate(currentTime),
           });
-  
-          // Store updated user data in state
+
           setUserData({ ...userData, streaks: updatedStreak, lastLogin: currentTime });
         } else {
-          console.log("User not found in Firestore");
-          navigate("/login");
+          // Create new user document if it doesn't exist
+          const currentTime = new Date();
+          const newUserData = {
+            email: user.email,
+            streaks: 0,
+            lastLogin: Timestamp.fromDate(currentTime),
+            createdAt: Timestamp.fromDate(currentTime)
+          };
+          
+          await setDoc(userRef, newUserData);
+          setUserData(newUserData);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
