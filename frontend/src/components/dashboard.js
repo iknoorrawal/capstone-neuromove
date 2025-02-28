@@ -44,12 +44,12 @@ const Dashboard = () => {
           const currentTime = new Date();
           const lastLogin = userData.lastLogin?.toDate();
           const timeDifference = lastLogin ? (currentTime - lastLogin) / (1000 * 60) : 0;
-          let updatedStreak = userData.streaks || 0;
+          let updatedStreak = userData.streaks || 1;  // Default to 1 if no streak exists
 
           if (timeDifference >= 24 && timeDifference <= 48) {
             updatedStreak += 1;
           } else if (timeDifference > 48) {
-            updatedStreak = 0;
+            updatedStreak = 1;  // Reset to 1 instead of 0
           }
 
           await updateDoc(userRef, {
@@ -63,7 +63,10 @@ const Dashboard = () => {
           const currentTime = new Date();
           const newUserData = {
             email: user.email,
-            streaks: 0,
+            firstName: "User",
+            lastName: "",
+            level: "1",
+            streaks: 1,  // Start at 1 instead of 0
             lastLogin: Timestamp.fromDate(currentTime),
             createdAt: Timestamp.fromDate(currentTime)
           };
@@ -192,17 +195,32 @@ const Dashboard = () => {
             sx={{
               backgroundColor: "#F0F0F0",
               borderRadius: 3,
-              p: 2,
+              p: 3,
               minWidth: 300,
               minHeight: 100,
               display: "flex",
               flexDirection: "column",
-              alignItems: "left",
+              justifyContent: "center",
+              alignItems: "center",
+              textAlign: "center"
             }}
           >
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Streak Counter: {userData?.streaks ?? 0} 🔥
+            <Typography variant="h4" sx={{ mb: 1, fontWeight: "bold" }}>
+              Streak Counter
             </Typography>
+            <Box sx={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 2,
+              mt: 1
+            }}>
+              <Typography variant="h2" sx={{ fontWeight: "bold", color: "#d63384" }}>
+                {userData?.streaks ?? 0}
+              </Typography>
+              <Typography variant="h2" sx={{ color: "#d63384" }}>
+                🔥
+              </Typography>
+            </Box>
           </Box>
         </Box>
 

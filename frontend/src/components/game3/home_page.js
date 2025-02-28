@@ -1,25 +1,62 @@
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../../firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Button, CircularProgress } from "@mui/material";
 
 const ReachAndRecallLevelsPage = ({ user }) => {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
+        const updateUserData = async () => {
+            try {
+                if (!user) {
+                    navigate('/login');
+                    return;
+                }
+
+                const userRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userRef);
+
+                if (userSnap.exists()) {
+                    const userData = userSnap.data();
+                    const currentTime = new Date();
+
+                    // Initialize streaks and lastLogin if they don't exist
+                    const lastLogin = userData.lastLogin ? userData.lastLogin.toDate() : currentTime;
+                    const currentStreak = userData.streaks || 0;
+
+                    const timeDifference = (currentTime - lastLogin) / (1000 * 60 * 60); // Convert to hours
+
+                    let updatedStreak = currentStreak;
+
+                    if (timeDifference >= 24 && timeDifference <= 48) {
+                        updatedStreak += 1;
+                    } else if (timeDifference > 48) {
+                        updatedStreak = 0;
+                    }
+
+                    await updateDoc(userRef, {
+                        streaks: updatedStreak,
+                        lastLogin: Timestamp.fromDate(currentTime),
+                    });
+                }
+            } catch (error) {
+                console.error("Error updating user data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        updateUserData();
     }, [user, navigate]);
 
     const handleStartGame = (level) => {
-        navigate(`/reach-and-recall/${user.uid}/memorize/level/${level}`);
+        navigate(`/reach-and-recall/${user.uid}/instructions/level/${level}`);
     };
 
-    if (!user) {
+    if (loading) {
         return (
             <Box sx={{
                 display: "flex",
@@ -30,6 +67,10 @@ const ReachAndRecallLevelsPage = ({ user }) => {
                 <CircularProgress />
             </Box>
         );
+    }
+
+    if (!user) {
+        return null;
     }
 
     const levels = [
@@ -48,7 +89,25 @@ const ReachAndRecallLevelsPage = ({ user }) => {
             gap: 3,
             padding: 3,
             background: "linear-gradient(180deg, #ff9aa2 0%, #ffb1c1 100%)",
+            position: "relative"
         }}>
+            <Button
+                onClick={() => navigate(`/dashboard/${user.uid}`)}
+                sx={{
+                    position: 'absolute',
+                    top: 20,
+                    left: 20,
+                    backgroundColor: '#d63384',
+                    color: 'white',
+                    '&:hover': {
+                        backgroundColor: '#c02674',
+                    },
+                    zIndex: 10
+                }}
+            >
+                Exit Game
+            </Button>
+
             <Typography variant="h4" sx={{ mb: 4, color: "#fff", textAlign: "center" }}>
                 Select a Level
             </Typography>
