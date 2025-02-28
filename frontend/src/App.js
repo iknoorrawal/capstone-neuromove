@@ -49,7 +49,7 @@ const App = () => {
         <Route path="/reach-and-recall/:uid/home-page" element={<ReachAndRecallLevelsPage user={user} />} />
         <Route path="/reach-and-recall/:uid/memorize/level/:level" element={<ReachAndRecallMemorize user={user} />} />
         <Route path="/reach-and-recall/:uid/final-score" element={<FinalScore user={user} />} />
-        <Route path="/reach-and-recall/:uid/instructions" element={<Game3Instructions user={user} />} />
+        <Route path="/reach-and-recall/:uid/instructions/level/:level" element={<Game3Instructions user={user} />} />
         <Route path="/balance-quest/:uid/home-page" element={<BalanceQuestLevelsPage user={user} />} />
         <Route path="/balance-quest/:uid/game/level/:level" element={<BalanceQuest user={user} />} />
         <Route path="/balance-quest/:uid/instructions" element={<Game1Instructions user={user} />} />

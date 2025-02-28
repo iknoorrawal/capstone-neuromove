@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from "react";
 import "./game-3-instructions.css";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
+import { useNavigate, useParams } from "react-router-dom";
 
-const Game3Instructions = ({ onComplete }) => {
+const Game3Instructions = ( {onComplete}) => {
+  const { uid, level } = useParams(); // Get user ID & level from URL
+  const navigate = useNavigate();
+
   const [step, setStep] = useState(0);
   const [countdown, setCountdown] = useState(3); 
 
   const nextStep = () => {
-    if (step < 4) {
+    if (step < 3) {
       setStep(step + 1);
     } else {
-      onComplete();
+      navigate(`/reach-and-recall/${uid}/memorize/level/${level}`);
     }
   };
 
@@ -24,6 +28,13 @@ const Game3Instructions = ({ onComplete }) => {
       <div className="instructions-container">
         <img className="background-top-left" src="/top-left-wavy.png" alt="Top Left Wavy" />
         <img className="background-bottom-right" src="/bottom-right-wavy.png" alt="Bottom Right Wavy" />
+        
+        <button 
+          className="exit-button"
+          onClick={() => navigate(`/reach-and-recall/${uid}/home-page`)}
+        >
+          Exit Game
+        </button>
 
         {step === 0 && (
           <div className="instruction-screen">
@@ -89,7 +100,7 @@ const Game3Instructions = ({ onComplete }) => {
           <h2>You are all set. Are you ready to play?</h2>
           <div className="button-group">
             <button onClick={restartInstructions}>Repeat Instructions</button>
-            <button onClick={onComplete}>Play Now</button>
+            <button onClick={() => navigate(`/reach-and-recall/${uid}/memorize/level/${level}`)}>Play Now</button>
           </div>
         </div>
       )}
