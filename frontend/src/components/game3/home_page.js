@@ -78,7 +78,7 @@ const ReachAndRecallLevelsPage = ({ user }) => {
 
     const handleStartGame = (level) => {
         if (levelStatus[level].unlocked) {
-            navigate(`/reach-and-recall/${user.uid}/memorize/level/${level}`);
+            navigate(`/reach-and-recall/${user.uid}/instructions/level/${level}`);
         }
     };
 
@@ -111,7 +111,25 @@ const ReachAndRecallLevelsPage = ({ user }) => {
             gap: 3,
             padding: 3,
             background: "linear-gradient(180deg, #ff9aa2 0%, #ffb1c1 100%)",
+            position: "relative"
         }}>
+            <Button
+                onClick={() => navigate(`/dashboard/${user.uid}`)}
+                sx={{
+                    position: 'absolute',
+                    top: 20,
+                    left: 20,
+                    backgroundColor: '#d63384',
+                    color: 'white',
+                    '&:hover': {
+                        backgroundColor: '#c02674',
+                    },
+                    zIndex: 10
+                }}
+            >
+                Exit Game
+            </Button>
+
             <Typography variant="h4" sx={{ mb: 4, color: "#fff", textAlign: "center" }}>
                 Select a Level
             </Typography>
