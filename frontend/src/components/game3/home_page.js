@@ -26,45 +26,48 @@ const ReachAndRecallLevelsPage = ({ user }) => {
             try {
                 const gameRef = collection(db, "users", user.uid, "game3");
                 
-                // Get the latest completion for each level
-                const levels = [1, 2];  // Check levels 1 and 2 for unlocking 2 and 3
+                // Initialize with level 1 unlocked
                 const newLevelStatus = {
-                    1: { unlocked: true }, // Level 1 always unlocked
+                    1: { unlocked: true },
                     2: { unlocked: false },
                     3: { unlocked: false }
                 };
 
-                for (const level of levels) {
-                    const q = query(
+                // Check for any perfect completion of level 1
+                const level1Query = query(
+                    gameRef,
+                    where("level", "==", 1),
+                    where("incorrect_count", "==", 0),  // Look for any perfect completion
+                    limit(1)  // We only need to know if at least one exists
+                );
+
+                const level1Snapshot = await getDocs(level1Query);
+                console.log("Level 1 has perfect completion:", !level1Snapshot.empty);
+                
+                // If level 1 was ever completed perfectly, unlock level 2 permanently
+                if (!level1Snapshot.empty) {
+                    newLevelStatus[2].unlocked = true;
+                    console.log("Level 2 unlocked");
+
+                    // Check for any perfect completion of level 2
+                    const level2Query = query(
                         gameRef,
-                        where("level", "==", level),
-                        orderBy("timestamp", "desc"),
+                        where("level", "==", 2),
+                        where("incorrect_count", "==", 0),
                         limit(1)
                     );
 
-                    const querySnapshot = await getDocs(q);
-                    console.log(`Checking level ${level}:`, querySnapshot.empty ? 'No completions' : 'Has completions');
+                    const level2Snapshot = await getDocs(level2Query);
+                    console.log("Level 2 has perfect completion:", !level2Snapshot.empty);
                     
-                    if (!querySnapshot.empty) {
-                        const lastCompletion = querySnapshot.docs[0].data();
-                        console.log(`Level ${level} last completion:`, lastCompletion);
-                        
-                        // Check for perfect completion after getting the document
-                        if (lastCompletion.incorrect_count === 0) {
-                            const completionDate = lastCompletion.timestamp.toDate();
-                            const daysSinceCompletion = (Date.now() - completionDate) / (1000 * 60 * 60 * 24);
-                            console.log(`Days since completion: ${daysSinceCompletion}`);
-
-                            // Unlock next level if completion was within 30 days
-                            if (daysSinceCompletion <= 30) {
-                                newLevelStatus[level + 1].unlocked = true;
-                                console.log(`Unlocking level ${level + 1}`);
-                            }
-                        }
+                    // If level 2 was ever completed perfectly, unlock level 3 permanently
+                    if (!level2Snapshot.empty) {
+                        newLevelStatus[3].unlocked = true;
+                        console.log("Level 3 unlocked");
                     }
                 }
 
-                console.log('Final level status:', newLevelStatus);
+                console.log("Final level status:", newLevelStatus);
                 setLevelStatus(newLevelStatus);
                 setLoading(false);
             } catch (error) {
