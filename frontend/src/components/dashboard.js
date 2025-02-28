@@ -13,7 +13,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore"; // Add updateDoc and Timestamp
 
 const Dashboard = () => {
   const { uid } = useParams();
@@ -36,11 +36,35 @@ const Dashboard = () => {
       }
 
       try {
-        const userRef = doc(db, "users", uid);
+        const userRef = doc(db, "users", uid); //gets user from userid with if statements
         const userSnap = await getDoc(userRef);
 
         if (userSnap.exists()) {
-          setUserData(userSnap.data());
+          const userData = userSnap.data();
+
+          // Streak Logic
+          const lastLogin = userData.lastLogin?.toDate(); // Convert Firestore timestamp to JavaScript Date
+          const currentTime = new Date();
+          const timeDifference = (currentTime - lastLogin) / (1000 * 60); // Convert to hours
+
+          let updatedStreak = userData.streaks;
+
+          if (timeDifference >= 24 && timeDifference <= 48) {
+
+          //if (timeDifference >= 24 && timeDifference <= 48) {
+            updatedStreak += 1; // Increase streak
+          } else if (timeDifference > 48) {
+            updatedStreak = 0; // Reset streak
+          }
+  
+          // Update Firestore with new streak and lastLogin
+          await updateDoc(userRef, {
+            streaks: updatedStreak,
+            lastLogin: Timestamp.fromDate(currentTime),
+          });
+  
+          // Store updated user data in state
+          setUserData({ ...userData, streaks: updatedStreak, lastLogin: currentTime });
         } else {
           console.log("User not found in Firestore");
           navigate("/login");
@@ -175,7 +199,7 @@ const Dashboard = () => {
             }}
           >
             <Typography variant="h6" sx={{ mb: 2 }}>
-              Streak Counter (TODO)
+              Streak Counter: {userData?.streaks ?? 0} 🔥
             </Typography>
           </Box>
         </Box>

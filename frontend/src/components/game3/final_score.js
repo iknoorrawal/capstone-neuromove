@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { calculateScore } from './game_config';
 
@@ -36,8 +36,15 @@ const FinalScore = ({ user }) => {
                     incorrect_count: location.state.incorrect,
                     duration: location.state.duration,
                     timestamp: serverTimestamp(),
-                    numbers: location.state.numbers
+                    numbers: location.state.numbers,
                 });
+
+                // Update totalPoints in user's document
+                const userRef = doc(db, "users", user.uid);
+                await updateDoc(userRef, {
+                totalPoints: increment(score)
+                });
+
             } catch (error) {
                 console.error("Error storing score:", error);
             }
@@ -55,6 +62,8 @@ const FinalScore = ({ user }) => {
     }
 
     const score = calculateScore(location.state.incorrect, location.state.level);
+
+      // update in firebase here 
 
     return (
         <Box
