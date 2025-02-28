@@ -1,9 +1,4 @@
 
 /backend/__pycache__
-# Ignore node_modules
-node_modules/
-# Ignore Python virtual environments
-venv/
-backend/venv/
-# Ignore Anima files
-.anima/
+/node_modules
+/frontend/node_modules
