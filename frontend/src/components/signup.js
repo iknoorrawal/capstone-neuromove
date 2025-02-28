@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { auth, db } from "../firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth"; // look at this
+import { doc, setDoc } from "firebase/firestore"; // functions that are built by firebase
 import { TextField, Button, Box, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom"; 
 
@@ -19,11 +19,14 @@ const Signup = () => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-    await setDoc(doc(db, "users", user.uid), {
+    await setDoc(doc(db, "users", user.uid), { // also this, creating fields in firebase
       firstName,
       lastName,
       email,
       dob,
+      totalPoints: 0,
+      streaks: 0, // New field to track streaks
+      lastLogin: new Date(), // Initialize last login
       createdAt: new Date(),
     });
 
