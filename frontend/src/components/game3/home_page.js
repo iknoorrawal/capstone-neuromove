@@ -3,6 +3,8 @@ import { auth, db } from "../../firebase";
 import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Button, CircularProgress } from "@mui/material";
+import LockIcon from '@mui/icons-material/Lock';
+import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 
 const ReachAndRecallLevelsPage = ({ user }) => {
     const navigate = useNavigate();
@@ -124,26 +126,37 @@ const ReachAndRecallLevelsPage = ({ user }) => {
                         key={levelInfo.level}
                         variant="contained"
                         onClick={() => handleStartGame(levelInfo.level)}
+                        disabled={!levelStatus[levelInfo.level].unlocked}
                         sx={{
-                            backgroundColor: "#fff",
-                            color: "#FF6B6B",
+                            backgroundColor: levelStatus[levelInfo.level].unlocked ? "#fff" : "#e0e0e0",
+                            color: levelStatus[levelInfo.level].unlocked ? "#FF6B6B" : "#999",
                             padding: 2,
                             borderRadius: 2,
                             '&:hover': {
-                                backgroundColor: "#FFE5E5",
+                                backgroundColor: levelStatus[levelInfo.level].unlocked ? "#FFE5E5" : "#e0e0e0",
                             },
                             display: "flex",
                             flexDirection: "column",
                             alignItems: "center",
-                            gap: 1
+                            gap: 1,
+                            position: 'relative'
                         }}
                     >
                         <Typography variant="h6">
                             Level {levelInfo.level}
+                            {!levelStatus[levelInfo.level].unlocked && 
+                                <LockIcon sx={{ ml: 1, verticalAlign: 'middle' }} />
+                            }
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                             {levelInfo.description}
                         </Typography>
+                        {!levelStatus[levelInfo.level].unlocked && (
+                            <Typography variant="caption" color="error">
+                                {levelInfo.level === 1 ? "Start here" : 
+                                 `Complete Level ${levelInfo.level - 1} with 100% accuracy to unlock`}
+                            </Typography>
+                        )}
                     </Button>
                 ))}
             </Box>

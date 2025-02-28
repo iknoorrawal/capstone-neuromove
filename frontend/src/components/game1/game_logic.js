@@ -12,27 +12,48 @@ import {
   Button,
   Dialog,
   DialogActions,
-  DialogTitle
+  DialogTitle,
+  Typography
 } from "@mui/material";
 
 import FinalScore from "./final_score";
 
-function BalanceQuest() {
-  const { uid } = useParams();
-  const navigate = useNavigate();
+const LEVEL_CONFIG = {
+  1: {
+    items: 10,
+    memorizeTime: 10,
+    guessTime: 15
+  },
+  2: {
+    items: 12,
+    memorizeTime: 10,
+    guessTime: 10
+  },
+  3: {
+    items: 15,
+    memorizeTime: 10,
+    guessTime: 5
+  }
+};
 
+function BalanceQuest() {
+  const { uid, level: levelParam } = useParams();
+  const level = parseInt(levelParam) || 1;
+  const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
+  
+  const navigate = useNavigate();
   const [gameData, setGameData] = useState(null);
   const [error, setError] = useState(null);
   const [gameId] = useState(uuidv4());
 
   const [showInitial, setShowInitial] = useState(true);
-  const [initialTimer, setInitialTimer] = useState(10); // 10 seconds
+  const [initialTimer, setInitialTimer] = useState(config.memorizeTime);
 
   const [guessIndex, setGuessIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
 
-  const [guessTimer, setGuessTimer] = useState(5);
+  const [guessTimer, setGuessTimer] = useState(config.guessTime);
   const [dataSaved, setDataSaved] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
 
@@ -40,14 +61,14 @@ function BalanceQuest() {
   useEffect(() => {
     const fetchGameData = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:8000/game");
+        const response = await axios.get(`http://127.0.0.1:8000/game?level=${level}`);
         setGameData(response.data);
       } catch (err) {
         setError(err.message);
       }
     };
     fetchGameData();
-  }, []);
+  }, [level]);
 
 
   useEffect(() => {
@@ -71,7 +92,7 @@ function BalanceQuest() {
 
   useEffect(() => {
     if (gameData && !showInitial && !done) {
-      setGuessTimer(5);
+      setGuessTimer(config.guessTime);
 
       const interval = setInterval(() => {
         setGuessTimer((prev) => {
@@ -82,12 +103,12 @@ function BalanceQuest() {
             goToNextGuess();
             return 0;
           }
-        }, 1000);
+        });
       }, 1000);
 
       return () => clearInterval(interval);
     }
-  }, [guessIndex, showInitial, done, gameData]);
+  }, [guessIndex, showInitial, done, gameData, config.guessTime]);
 
   const goToNextGuess = () => {
     if (!gameData) return;
@@ -119,7 +140,8 @@ function BalanceQuest() {
         correct_count: score, 
         incorrect_count: gameData.guessEmojis.length-score,
         initalCategory: gameData.initialEmojis,
-        timestamp: Timestamp.now()
+        timestamp: Timestamp.now(),
+        level: level
       })
         .then(() => {
           console.log("Game result saved to Firebase!");
@@ -131,7 +153,7 @@ function BalanceQuest() {
           setDataSaved(true);
         });
     }
-  }, [done, dataSaved, uid, gameData, score]);
+  }, [done, dataSaved, uid, gameData, score, level]);
 
   const handleOpenConfirm = () => {
     setOpenConfirm(true);
@@ -143,7 +165,6 @@ function BalanceQuest() {
 
   const handleConfirmExit = () => {
     setOpenConfirm(false);
-    // Navigate away, e.g. to the same "home-page" or to the dashboard
     navigate(`/balance-quest/${uid}/home-page`);
   };
 
@@ -171,6 +192,7 @@ function BalanceQuest() {
         total={gameData.guessEmojis.length}
         uid={uid}
         gameId={gameId}
+        level={level}
       />
     );
   }
@@ -204,128 +226,171 @@ function BalanceQuest() {
   // -- 7. First screen: show category emojis --
   if (showInitial) {
     return (
-      <div
-        style={{
-          textAlign: "center",
-          marginTop: "50px",
-          fontFamily: "sans-serif",
-          position: "relative", // allows the absolutely positioned button
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          padding: 4,
+          background: "linear-gradient(to bottom right, #FDE3C3, #FFF2E5)",
+          position: "relative",
+          textAlign: "center"
         }}
       >
         {ExitButtonAndDialog}
 
-        <h1 style={{ marginBottom: "20px", color: "#A0522D" }}>
+        <Typography variant="h3" sx={{ mb: 4, color: "#A0522D", fontWeight: "bold" }}>
           The following items belong
           <br />
-          to one category.
-        </h1>
+          to one category
+        </Typography>
 
-        <div style={{ fontSize: "8rem", margin: "40px 0" }}>
+        <Box sx={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          gap: 4, 
+          my: 6,
+          fontSize: "8rem"
+        }}>
           {gameData.initialEmojis.map((item, idx) => (
-            <span key={idx} style={{ margin: "0 25px" }}>
-              {item.emoji}
-            </span>
+            <Box
+              key={idx}
+              sx={{
+                width: "150px",
+                height: "150px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "white",
+                borderRadius: "16px",
+                boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              <span>{item.emoji}</span>
+            </Box>
           ))}
-        </div>
+        </Box>
 
-        <p style={{ marginTop: "20px", fontSize: "1.2rem" }}>
-          {initialTimer} second
-          {initialTimer > 1 ? "s" : ""} remaining...
-        </p>
-      </div>
+        <Typography variant="h5" sx={{ color: "#A0522D" }}>
+          {initialTimer} second{initialTimer > 1 ? "s" : ""} remaining...
+        </Typography>
+      </Box>
     );
   }
 
   const currentGuess = gameData.guessEmojis[guessIndex];
 
-  const radius = 70;
-  const circumference = 2 * Math.PI * radius;
-  const fraction = guessTimer / 5;
-  const strokeDashoffset = circumference * (1 - fraction);
-
   return (
-    <div
-      style={{
-        textAlign: "center",
-        marginTop: "50px",
-        fontFamily: "sans-serif",
-        position: "relative",
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        minHeight: "100vh",
+        padding: 4,
+        background: "linear-gradient(to bottom right, #FDE3C3, #FFF2E5)",
+        position: "relative"
       }}
     >
       {ExitButtonAndDialog}
 
-      <h1 style={{ color: "#A0522D" }}>Select the correct answer</h1>
+      <Typography variant="h3" sx={{ mb: 6, color: "#A0522D", fontWeight: "bold" }}>
+        Select the correct answer
+      </Typography>
 
-      <div
-        style={{
+      <Box
+        sx={{
           position: "relative",
-          width: "150px",
-          height: "150px",
-          margin: "40px auto",
+          width: "200px",
+          height: "200px",
+          mb: 4
         }}
       >
-        {/* Circular SVG countdown (brown stroke) */}
-        <svg width="150" height="150">
+        {/* Circular SVG countdown */}
+        <svg width="200" height="200">
           <circle
-            cx="75"
-            cy="75"
-            r={radius}
+            cx="100"
+            cy="100"
+            r={90}
             fill="none"
             stroke="#A0522D"
-            strokeWidth="10"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
+            strokeWidth="8"
+            strokeDasharray={2 * Math.PI * 90}
+            strokeDashoffset={2 * Math.PI * 90 * (1 - guessTimer / config.guessTime)}
             strokeLinecap="round"
           />
         </svg>
 
-        {/* Center the emoji absolutely on top of the SVG */}
-        <div
-          style={{
+        {/* Emoji Container */}
+        <Box
+          sx={{
             position: "absolute",
-            top: "0",
-            left: "0",
-            width: "150px",
-            height: "150px",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "140px",
+            height: "140px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: "5rem",
+            fontSize: "6rem",
           }}
         >
           {currentGuess.emoji}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div style={{ marginTop: "30px" }}>
-        <button
+      <Box sx={{ display: "flex", gap: 3, mb: 4 }}>
+        <Button
+          variant="contained"
           onClick={() => handleGuess(true)}
-          style={{
-            fontSize: "1.2rem",
-            marginRight: "40px",
-            padding: "10px 20px",
-            cursor: "pointer",
+          sx={{
+            backgroundColor: "#A0522D",
+            fontSize: "1.1rem",
+            padding: "12px 32px",
+            borderRadius: "8px",
+            "&:hover": {
+              backgroundColor: "#8B4513"
+            }
           }}
         >
           In Category
-        </button>
+        </Button>
 
-        <button
+        <Button
+          variant="outlined"
           onClick={() => handleGuess(false)}
-          style={{
-            fontSize: "1.2rem",
-            padding: "10px 20px",
-            cursor: "pointer",
+          sx={{
+            borderColor: "#A0522D",
+            color: "#A0522D",
+            fontSize: "1.1rem",
+            padding: "12px 32px",
+            borderRadius: "8px",
+            "&:hover": {
+              borderColor: "#8B4513",
+              backgroundColor: "rgba(160, 82, 45, 0.1)"
+            }
           }}
         >
           Not In Category
-        </button>
-      </div>
+        </Button>
+      </Box>
 
-      <p style={{ marginTop: "30px", fontSize: "1.1rem" }}>
-        Score: {score} / {guessIndex} &nbsp;|&nbsp; Time left: {guessTimer}s
-      </p>
-    </div>
+      <Box
+        sx={{
+          backgroundColor: "white",
+          borderRadius: "12px",
+          padding: "12px 24px",
+          boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <Typography variant="h6" sx={{ color: "#A0522D" }}>
+          Score: {score} / {guessIndex} &nbsp;|&nbsp; Time left: {guessTimer}s
+        </Typography>
+      </Box>
+    </Box>
   );
 }
 
