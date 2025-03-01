@@ -14,6 +14,7 @@ import BalanceQuest from "./components/game1/game_logic";
 import FinalScore from './components/game3/final_score';
 import Game3Instructions from "./components/game3/game-3-instructions/Game3Instructions";
 import BalanceQuestLevelsPage from "./components/game1/home_page";
+import Settings from './components/settings';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -44,7 +45,8 @@ const App = () => {
         <Route path="/" element={<Home  />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard/:uid" element={<Dashboard user={user} />} />
+        <Route path="/dashboard/:uid" element={<Dashboard />} />
+        <Route path="/settings/:uid" element={<Settings />} />
         <Route path="/reach-and-recall/:uid/home-page" element={<ReachAndRecallLevelsPage user={user} />} />
         <Route path="/reach-and-recall/:uid/memorize/level/:level" element={<ReachAndRecallMemorize user={user} />} />
         <Route path="/reach-and-recall/:uid/final-score" element={<FinalScore user={user} />} />

@@ -136,9 +136,15 @@ const Dashboard = () => {
 
           <Menu
             anchorEl={anchorEl}
-            open={open}
+            open={Boolean(anchorEl)}
             onClose={handleClose}
           >
+            <MenuItem onClick={() => {
+              navigate(`/settings/${uid}`);
+              handleClose();
+            }}>
+              Settings
+            </MenuItem>
             <MenuItem onClick={handleSignOut}>Sign Out</MenuItem>
           </Menu>
         </Box>
