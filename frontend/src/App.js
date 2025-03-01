@@ -6,7 +6,6 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import Signup from "./components/signup";
 import Login from "./components/login";
-import Home from "./components/home";
 import Dashboard from "./components/dashboard";
 import ReachAndRecallLevelsPage from "./components/game3/home_page";
 import ReachAndRecallMemorize from "./components/game3/memorize_numbers";
@@ -41,9 +40,9 @@ const App = () => {
     <Router>
       <Routes>
         {/* Define the routes for your pages */}
-        <Route path="/" element={<Home  />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Login />} />
         <Route path="/dashboard/:uid" element={<Dashboard user={user} />} />
         <Route path="/reach-and-recall/:uid/home-page" element={<ReachAndRecallLevelsPage user={user} />} />
         <Route path="/reach-and-recall/:uid/memorize/level/:level" element={<ReachAndRecallMemorize user={user} />} />
