@@ -41,9 +41,9 @@ const App = () => {
     <Router>
       <Routes>
         {/* Define the routes for your pages */}
-        <Route path="/" element={<Home  />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Login />} />
         <Route path="/dashboard/:uid" element={<Dashboard user={user} />} />
         <Route path="/reach-and-recall/:uid/home-page" element={<ReachAndRecallLevelsPage user={user} />} />
         <Route path="/reach-and-recall/:uid/memorize/level/:level" element={<ReachAndRecallMemorize user={user} />} />
