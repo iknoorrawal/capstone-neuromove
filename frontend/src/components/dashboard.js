@@ -252,7 +252,7 @@ const Dashboard = () => {
             level={`Level ${level}`}
             description="Strengthen your balance and sharpen your mind by switching feet."
             bgColor="orange"
-            image="/balancequest.png" // Replace with your image URL
+            image="/balancequest.png"
           />
           </Grid2>
           <GameCard

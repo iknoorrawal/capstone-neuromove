@@ -9,6 +9,11 @@ import { collection, query, where, getDocs, orderBy, limit } from "firebase/fire
 const ReachAndRecallLevelsPage = ({ user }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
+    const [levelStatus, setLevelStatus] = useState({
+        1: { unlocked: true },
+        2: { unlocked: false },
+        3: { unlocked: false }
+    });
 
     useEffect(() => {
         const updateUserData = async () => {
@@ -38,6 +43,31 @@ const ReachAndRecallLevelsPage = ({ user }) => {
                     } else if (timeDifference > 48) {
                         updatedStreak = 0;
                     }
+
+                    // Check for completed levels and update level status
+                    const completedLevelsRef = collection(db, "completedLevels");
+                    const q = query(
+                        completedLevelsRef,
+                        where("userId", "==", user.uid),
+                        where("game", "==", "reach-and-recall"),
+                        orderBy("completedAt", "desc")
+                    );
+                    
+                    const completedLevelsSnap = await getDocs(q);
+                    const newLevelStatus = { ...levelStatus };
+                    
+                    completedLevelsSnap.forEach((doc) => {
+                        const levelData = doc.data();
+                        const completedLevel = parseInt(levelData.level);
+                        if (levelData.accuracy === 100) {
+                            // Unlock the next level if 100% accuracy was achieved
+                            if (completedLevel < 3) {
+                                newLevelStatus[completedLevel + 1] = { unlocked: true };
+                            }
+                        }
+                    });
+                    
+                    setLevelStatus(newLevelStatus);
 
                     await updateDoc(userRef, {
                         streaks: updatedStreak,
