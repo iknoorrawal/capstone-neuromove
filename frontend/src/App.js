@@ -6,7 +6,6 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import Signup from "./components/signup";
 import Login from "./components/login";
-import Home from "./components/home";
 import Dashboard from "./components/dashboard";
 import ReachAndRecallLevelsPage from "./components/game3/home_page";
 import ReachAndRecallMemorize from "./components/game3/memorize_numbers";
