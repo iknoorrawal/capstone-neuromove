@@ -1,14 +1,25 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow: hidden;
+}
+
 .instructions-container {
   position: relative;
   text-align: center;
-  padding: 20px;
-  min-height: 95vh;
+  padding: 10px;
+  height: 100vh;
   width: 100vw;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: white;
   overflow: hidden;
+  max-width: 100%;
 }
 
 /* Position the background images */
@@ -16,7 +27,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 50%;
+  width: 40%;
   height: auto;
   z-index: 0;
 }
@@ -25,7 +36,7 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 50%;
+  width: 40%;
   height: auto;
   z-index: 0;
 }
@@ -33,52 +44,50 @@
 .instruction-screen {
   width: 80%;
   max-width: 900px;
-  max-height: 90vh;
-  padding: 40px;
+  height: 80vh;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   background: transparent;
   text-align: center;
-  gap: 30px;
+  gap: 10px;
   position: relative;
   z-index: 1;
+  overflow: hidden;
 }
 
 .instruction-screen h2 {
-  font-size: 32px;
-  margin-bottom: 20px;
+  font-size: calc(20px + 1vmin);
+  margin-bottom: 5px;
   color: #d63384;
 }
 
 .instruction-screen p {
-  font-size: 24px;
-  margin-bottom: 30px;
+  font-size: calc(14px + 1vmin);
+  margin-bottom: 10px;
 }
 
 .number-display {
-  margin: 30px 0;
+  margin: 10px 0;
 }
 
 .number-display span {
   display: inline-block;
   background: linear-gradient(45deg, #ff758c, #ff7eb3);
   color: white;
-  font-size: 32px;
-  width: 70px;
-  height: 70px;
+  font-size: 24px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  line-height: 70px;
-  margin: 10px;
+  line-height: 50px;
+  margin: 5px;
 }
 
 .illustration {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 300px;
-  height: 300px;
+  width: 200px;
+  height: 200px;
   background-color: transparent;
 }
 
@@ -92,20 +101,20 @@
 .button-group {
   display: flex;
   justify-content: center;
-  gap: 20px;
-  margin-top: 40px;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 button {
   background: #d63384;
   color: white;
   border: none;
-  padding: 15px 30px;
+  padding: 10px 20px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 16px;
   z-index: 5;
-  min-width: 150px;
+  min-width: 120px;
   transition: background-color 0.3s ease;
 }
 
@@ -117,88 +126,48 @@ button:hover {
   position: absolute;
   top: 20px;
   left: 20px;
-  background: #d63384;
-  color: white;
-  border: none;
   z-index: 10;
 }
 
-.exit-button:hover {
-  background: #c02674;
-}
-
-.reaching-container {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 20px 0;
-}
-
+.reaching-container,
 .standing-container {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 20px 0;
+  margin: 10px 0;
 }
 
-.number-bubble {
-  position: absolute;
-  left: -20%;
-  top: 20%;
-  background: linear-gradient(45deg, #ff758c, #ff7eb3);
-  color: white;
-  font-size: 20px;
-  font-weight: bold;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  line-height: 40px;
-  text-align: center;
-  z-index: 10;
-  transition: opacity 0.5s ease-in-out;
-}
-
-.countdown-container {
-  position: absolute;
-  left: -15%; /* Adjust this to move it closer to the hand */
-  top: 20%; /* Fine-tune for alignment */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transform: translate(-10%, -60%); /* Adjust positioning to align with the hand */
-}
-
+/* First, define a common position for both elements */
+.number-bubble,
 .countdown {
   position: absolute;
-  left: -23%; /* Center it on the hand */
-  top: 18%; /* Fine-tune */
-  color: white;
-  font-size: 20px;
-  font-weight: bold;
-  width: 40px;
-  height: 40px;
+  left: -21%;
+  top: 20%;
+  width: clamp(32px, 2.8vw, 35px);
+  height: clamp(32px, 2.8vw, 35px);
+  line-height: clamp(32px, 2.8vw, 35px);
   border-radius: 50%;
-  line-height: 40px;
   text-align: center;
-  z-index: 10;
   transition: opacity 0.5s ease-in-out;
 }
 
-.timer-text {
-  position: absolute;
-  left: 0; /* Center text inside */
-  top: 0; /* Fine-tune */
-  background: none; /* No need for a background */
+/* Number bubble specific styles */
+.number-bubble {
+  background: linear-gradient(45deg, #ff758c, #ff7eb3);
   color: white;
-  font-size: 20px;
+  font-size: clamp(16px, 1.5vw, 19px);
   font-weight: bold;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  line-height: 40px;
-  text-align: center;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Timer specific styles */
+.countdown {
+  transform: translate(-2px, -2px) scale(1);
+  z-index: 11;
+  width: clamp(32px, 2.8vw, 35px) !important;
+  height: clamp(32px, 2.8vw, 35px) !important;
 }
 
 .countdown-hidden,
