@@ -3,3 +3,5 @@
 venv/
 backend/venv/
 .anima/
+/node_modules
+/frontend/node_modules
