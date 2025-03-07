@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "./game-3-instructions.css";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { useNavigate, useParams } from "react-router-dom";
 
-const Game3Instructions = ( {onComplete}) => {
+const Game3Instructions = () => {
   const { uid, level } = useParams(); // Get user ID & level from URL
   const navigate = useNavigate();
 
@@ -75,10 +75,10 @@ const Game3Instructions = ( {onComplete}) => {
                   <CountdownCircleTimer
                     isPlaying
                     duration={3}
-                    colors={["#ff758c", "#F7B801", "#A30000"]}
-                    colorsTime={[3, 2, 0]}
-                    size={50}
-                    strokeWidth={6}
+                    colors={["#d63384"]}
+                    colorsTime={[3]}
+                    size={window.innerWidth <= 480 ? 35 : window.innerWidth <= 768 ? 36 : 38}  // Responsive size
+                    strokeWidth={4}  // Reduced stroke width for better appearance at smaller sizes
                     onComplete={() => {
                       setCountdown(0);
                       return { shouldRepeat: false, delay: 1 }; 
