@@ -2,9 +2,13 @@ import React, {useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Button,
+  Box,
+  Typography,
+  Container,
+  Paper
 } from "@mui/material";
 import { db } from "../../firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
 
 function getStarsAndPoints(score, total) {
   if (total === 0) return { stars: 0, points: 0 };
@@ -44,9 +48,10 @@ function renderStars(numStars, totalStars = 5) {
   return <div style={{ margin: "20px 0" }}>{stars}</div>;
 }
 
-function FinalScore({ score, total, uid, gameId }) {
+function FinalScore({ score, total, uid, gameId, level }) {
   const incorrectCount = total - score;
   const { stars, points } = getStarsAndPoints(score, total);
+  console.log('Final Score Debug:', { score, total, incorrectCount, stars, points, level });
 
   const navigate = useNavigate();
 
@@ -55,76 +60,125 @@ function FinalScore({ score, total, uid, gameId }) {
   };
 
   const handleExit = () => {
-    navigate(`/dashboard/${uid}`);
+    navigate(`/balance-quest/${uid}/home-page`);
   };
 
   useEffect(() => {
-      const docRef = doc(db, `users/${uid}/game1/${gameId}`);
+    const updateFirebase = async () => {
+      try {
+        // Update game score
+        const gameRef = doc(db, `users/${uid}/game1/${gameId}`);
+        await updateDoc(gameRef, {
+          score: points,
+        });
 
-      updateDoc(docRef, {
-        score: points,
-      })
-        .then(() => {
-          console.log("Game result saved to Firebase!");
-        })
-        .catch((err) => {
-          console.error("Error saving to Firebase:", err);
-        })
-  }, [points]);
+        // If perfect score, unlock next level
+        if (score === total) {
+          const userRef = doc(db, "users", uid);
+          const userDoc = await getDoc(userRef);
+          
+          if (userDoc.exists()) {
+            const currentData = userDoc.data();
+            const currentUnlockedLevels = currentData.unlockedLevels || [1];
+            
+            // Only try to unlock next level if we're not at the last level
+            if (level < 3) {
+              const nextLevel = level + 1;
+              
+              // If next level isn't already unlocked
+              if (!currentUnlockedLevels.includes(nextLevel)) {
+                const newUnlockedLevels = [...currentUnlockedLevels, nextLevel];
+                await updateDoc(userRef, {
+                  unlockedLevels: newUnlockedLevels
+                });
+                console.log(`Unlocked level ${nextLevel}`);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error updating Firebase:", err);
+      }
+    };
+
+    updateFirebase();
+  }, [score, total, points, uid, gameId, level]);
 
   return (
-    <div
-      style={{
-        textAlign: "center",
-        fontFamily: "sans-serif",
-        padding: "40px",
+    <Box
+      sx={{
         minHeight: "100vh",
-        background: "linear-gradient(to bottom right, #FDE3C3, #FFF2E5)"
+        background: "linear-gradient(to bottom right, #FDE3C3, #FFF2E5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        py: 4
       }}
     >
-
-      <h2 style={{ color: "#A0522D", marginTop: 0 }}>FINAL SCORE</h2>
-
-      {renderStars(stars, 5)}
-
-      <p style={{ fontSize: "1.1rem", color: "#777" }}>
-        {score} CORRECT &nbsp;•&nbsp; {incorrectCount} INCORRECT
-      </p>
-
-      <p style={{ fontSize: "1.4rem", color: "#000", fontWeight: "bold" }}>
-        +{points} Points
-      </p>
-
-      <div style={{ marginTop: "40px" }}>
-        <Button
-          variant="outlined"
-          onClick={handleExit}
+      <Container maxWidth="sm">
+        <Paper
+          elevation={3}
           sx={{
-            marginRight: "20px",
-            padding: "10px 3rem",
-            borderColor: "#A0522D",
-            color: "#A0522D"
+            p: 6,
+            borderRadius: 4,
+            textAlign: "center",
+            backgroundColor: "rgba(255, 255, 255, 0.9)"
           }}
         >
-          Exit Game
-        </Button>
+          <Typography variant="h3" sx={{ color: "#A0522D", fontWeight: "bold", mb: 4 }}>
+            FINAL SCORE
+          </Typography>
 
-        <Button
-          variant="contained"
-          onClick={handlePlayAgain}
-          sx={{
-            backgroundColor: "#A0522D",
-            color: "#fff",
-            padding: "10px 3rem",
-            "&:hover": {
-              backgroundColor: "#8B4513"
-            }
-          }}
-        >
-          Play Again
-        </Button>
-      </div>
-    </div>
+          {renderStars(stars, 5)}
+
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" sx={{ color: "#666", mb: 2 }}>
+              {score} CORRECT &nbsp;•&nbsp; {incorrectCount} INCORRECT
+            </Typography>
+
+            <Typography variant="h4" sx={{ color: "#A0522D", fontWeight: "bold" }}>
+              +{points} Points
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 3, justifyContent: "center" }}>
+            <Button
+              variant="outlined"
+              onClick={handleExit}
+              sx={{
+                px: 4,
+                py: 1.5,
+                borderColor: "#A0522D",
+                color: "#A0522D",
+                borderRadius: 2,
+                "&:hover": {
+                  borderColor: "#8B4513",
+                  backgroundColor: "rgba(160, 82, 45, 0.1)"
+                }
+              }}
+            >
+              Exit Game
+            </Button>
+
+            <Button
+              variant="contained"
+              onClick={handlePlayAgain}
+              sx={{
+                px: 4,
+                py: 1.5,
+                backgroundColor: "#A0522D",
+                borderRadius: 2,
+                "&:hover": {
+                  backgroundColor: "#8B4513"
+                }
+              }}
+            >
+              Play Again
+            </Button>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   );
 }
 

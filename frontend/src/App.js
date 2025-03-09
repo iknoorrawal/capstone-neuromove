@@ -6,13 +6,14 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import Signup from "./components/signup";
 import Login from "./components/login";
-import Home from "./components/home";
 import Dashboard from "./components/dashboard";
 import ReachAndRecallLevelsPage from "./components/game3/home_page";
 import ReachAndRecallMemorize from "./components/game3/memorize_numbers";
 import BalanceQuest from "./components/game1/game_logic";
 import FinalScore from './components/game3/final_score';
+import Game3Instructions from "./components/game3/game-3-instructions/Game3Instructions";
 import BalanceQuestLevelsPage from "./components/game1/home_page";
+import Settings from './components/settings';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -40,13 +41,15 @@ const App = () => {
     <Router>
       <Routes>
         {/* Define the routes for your pages */}
-        <Route path="/" element={<Home />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/settings/:uid" element={<Settings />} />
+        <Route path="/" element={<Login />} />
         <Route path="/dashboard/:uid" element={<Dashboard user={user} />} />
         <Route path="/reach-and-recall/:uid/home-page" element={<ReachAndRecallLevelsPage user={user} />} />
         <Route path="/reach-and-recall/:uid/memorize/level/:level" element={<ReachAndRecallMemorize user={user} />} />
         <Route path="/reach-and-recall/:uid/final-score" element={<FinalScore user={user} />} />
+        <Route path="/reach-and-recall/:uid/instructions/level/:level" element={<Game3Instructions user={user} />} />
         <Route path="/balance-quest/:uid/home-page" element={<BalanceQuestLevelsPage user={user} />} />
         <Route path="/balance-quest/:uid/game/level/:level" element={<BalanceQuest user={user} />} />
       </Routes>

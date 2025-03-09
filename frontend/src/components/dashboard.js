@@ -160,9 +160,15 @@ const Dashboard = () => {
 
           <Menu
             anchorEl={anchorEl}
-            open={open}
+            open={Boolean(anchorEl)}
             onClose={handleClose}
           >
+            <MenuItem onClick={() => {
+              navigate(`/settings/${uid}`);
+              handleClose();
+            }}>
+              Settings
+            </MenuItem>
             <MenuItem onClick={handleSignOut}>Sign Out</MenuItem>
           </Menu>
         </Box>
@@ -229,7 +235,6 @@ const Dashboard = () => {
           >
           <GameCard
             title="Balance Quest"
-            level={`Level ${level}`}
             description="Strengthen your balance and sharpen your mind by switching feet."
             bgColor="orange"
             image="/balancequest.png" // Replace with your image URL
@@ -237,7 +242,6 @@ const Dashboard = () => {
           </Grid2>
           <GameCard
             title="Beat Step"
-            level={`Level ${level}`}
             description="Train your rhythm and coordination with stepping challenges."
             bgColor="teal"
             image="/beatstep.png" // Replace with your image URL
@@ -246,7 +250,7 @@ const Dashboard = () => {
             item 
             xs={12} 
             md={4} 
-            onClick={() => navigate(`/reach-and-recall/${uid}/home-page`)}
+            onClick={() => navigate(`/reach-and-recall/${uid}/home-page`)} 
             sx={{
               cursor: 'pointer',
               transition: 'transform 0.3s ease-in-out',
@@ -255,21 +259,21 @@ const Dashboard = () => {
               }
             }}
           >
-          <GameCard
-            title="Reach & Recall"
-            level={`Level ${level}`}
-            description="Improve flexibility and memory by reaching and recalling items."
-            bgColor="pink"
-            image="/reachrecall.png" // Replace with your image URL
-          />
+            <GameCard
+              title="Reach & Recall"
+              description="Improve flexibility and memory by reaching and recalling items."
+              bgColor="pink"
+              image="/reachrecall.png"
+            />
           </Grid2>
+
         </Box>
       </Box>
     </Box>
   );
 };
 
-const GameCard = ({ title, level, description, bgColor, image }) => {
+const GameCard = ({ title, description, bgColor, image }) => {
 
   const gradientColors = {
     orange: "linear-gradient(135deg, #E67A26, #FFB74D)",
@@ -289,20 +293,6 @@ const GameCard = ({ title, level, description, bgColor, image }) => {
         overflow: "hidden",
       }}
     >
-      <Typography
-        variant="overline"
-        sx={{
-          position: "absolute",
-          top: 8,
-          right: 8,
-          bgcolor: "#fff",
-          color: "#000",
-          borderRadius: 1,
-          p: "2px 6px",
-        }}
-      >
-        {level}
-      </Typography>
       <CardContent>
         <Typography variant="h5" fontWeight="bold">
           {title}
