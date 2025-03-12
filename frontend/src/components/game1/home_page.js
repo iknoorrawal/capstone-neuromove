@@ -3,89 +3,55 @@ import { auth, db } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useNavigate, useParams } from "react-router-dom";
-import { Box, CircularProgress, Typography, Card, Button } from "@mui/material";
+import { Box, Typography, Button, CircularProgress } from "@mui/material";
 import LockIcon from '@mui/icons-material/Lock';
+import WarningIcon from '@mui/icons-material/Warning';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 
-const BalanceQuestLevelsPage = () => {
+const BalanceQuestLevelsPage = ({ user }) => {
     const navigate = useNavigate();
-    const { uid } = useParams();
-    const [loading, setLoading] = useState(true);
-    const [userData, setUserData] = useState(null);
     const [levelStatus, setLevelStatus] = useState({
-        1: { unlocked: true },
+        1: { unlocked: true }, // Level 1 always unlocked
         2: { unlocked: false },
         3: { unlocked: false }
     });
-
-    const levels = [
-        {
-            level: 1,
-            title: "Beginner",
-            description: "10 items • 10s memorize • 15s decide",
-            color: "#E67A26"
-        },
-        {
-            level: 2,
-            title: "Intermediate",
-            description: "12 items • 10s memorize • 10s decide",
-            color: "#369B9F"
-        },
-        {
-            level: 3,
-            title: "Advanced",
-            description: "15 items • 10s memorize • 5s decide",
-            color: "#F46895"
-        }
-    ];
+    const [loading, setLoading] = useState(true);
+    const [selectedLevel, setSelectedLevel] = useState(null);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                navigate("/login");
-                return;
-            }
+        if (!user) {
+            navigate('/login');
+            return;
+        }
 
-            if (user.uid !== uid) {
-                navigate(`/balance-quest/${user.uid}/home-page`);
-                return;
-            }
-
+        const checkLevelAccess = async () => {
             try {
-                const userRef = doc(db, "users", uid);
+                const userRef = doc(db, "users", user.uid);
                 const userSnap = await getDoc(userRef);
 
                 if (userSnap.exists()) {
                     const userData = userSnap.data();
-                    setUserData(userData);
-                    
-                    // Get unlocked levels from Firebase
                     const unlockedLevels = userData.unlockedLevels || [1];
-                    console.log("Unlocked levels from Firebase:", unlockedLevels);
                     
-                    // Update level status based on Firebase data
-                    const newLevelStatus = {};
-                    levels.forEach(level => {
-                        newLevelStatus[level.level] = {
-                            unlocked: unlockedLevels.includes(level.level)
-                        };
-                    });
+                    const newLevelStatus = {
+                        1: { unlocked: true },
+                        2: { unlocked: unlockedLevels.includes(2) },
+                        3: { unlocked: unlockedLevels.includes(3) }
+                    };
                     setLevelStatus(newLevelStatus);
-                } else {
-                    console.log("User not found in Firestore");
-                    navigate("/login");
                 }
+                setLoading(false);
             } catch (error) {
-                console.error("Error fetching user data:", error);
-                navigate("/login");
-            } finally {
+                console.error("Error checking level access:", error);
                 setLoading(false);
             }
-        });
+        };
 
-        return () => unsubscribe();
-    }, [uid, navigate]);
+        checkLevelAccess();
+    }, [user, navigate]);
 
-    if (loading) {
+    if (!user || loading) {
         return (
             <Box sx={{
                 display: "flex",
@@ -100,128 +66,248 @@ const BalanceQuestLevelsPage = () => {
 
     return (
         <Box sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
             minHeight: "100vh",
-            padding: 4,
-            background: "linear-gradient(to bottom right, #FDE3C3, #FFF2E5)",
-            position: "relative"
+            p: 4,
+            background: "#fff",
         }}>
-            {/* Exit Button */}
-            <Box sx={{ position: "absolute", top: 16, left: 16 }}>
-                <Button
-                    variant="outlined"
-                    onClick={() => navigate(`/dashboard/${uid}`)}
-                    sx={{
-                        borderColor: "#A0522D",
-                        color: "#A0522D",
-                        "&:hover": {
-                            borderColor: "#8B4513",
-                            backgroundColor: "rgba(160, 82, 45, 0.1)"
+            {/* Logo and Header */}
+            <Box sx={{ 
+                display: "flex",
+                flexDirection: "column",
+                mb: 3,
+            }}>
+                <Typography 
+                    variant="h6" 
+                    component="div" 
+                    onClick={() => navigate(`/dashboard/${user.uid}`)}
+                    sx={{ 
+                        cursor: 'pointer',
+                        fontWeight: 'medium',
+                        mb: 2,
+                        '&:hover': {
+                            opacity: 0.8
                         }
                     }}
                 >
-                    Exit to Dashboard
-                </Button>
+                    N E U R O M O V E
+                </Typography>
+                <Typography variant="h3" sx={{ 
+                    color: "#E67A26",
+                    fontWeight: "medium"
+                }}>
+                    Balance Quest
+                </Typography>
             </Box>
 
-            <Typography variant="h3" sx={{ mb: 2, color: "#A0522D", fontWeight: "bold" }}>
-                Balance Quest
-            </Typography>
-
-            <Typography variant="body1" sx={{ 
-                mb: 4, 
-                color: "#333", 
-                textAlign: "center",
-                maxWidth: "600px",
-                fontSize: "1.1rem",
-                lineHeight: 1.6,
-                textShadow: "0px 1px 2px rgba(0, 0, 0, 0.1)"
+            <Box sx={{ 
+                display: "flex",
+                gap: 6,
             }}>
-                Memorize a set of items that belong to one category,
-                then quickly identify whether new items belong to that same category. The faster and more accurate
-                you are, the higher your score.
-            </Typography>
-            
-            <Box sx={{ width: "100%", maxWidth: "800px" }}>
-                {levels.map((level) => (
-                    <Box
-                        key={level.level}
-                        sx={{
+                {/* Left Column - Game Info */}
+                <Box sx={{ flex: 1 }}>
+                    {/* Overview Section */}
+                    <Box sx={{ mb: 2 }}>
+                        <Typography variant="h6" sx={{ mb: 1 }}>Overview</Typography>
+                        <Typography variant="body1" color="text.secondary">
+                            Strengthen your balance and sharping your mind by switching feet to sort the items right.
+                        </Typography>
+                    </Box>
+
+                    {/* Set up Section */}
+                    <Box sx={{ mb: 2 }}>
+                        <Typography variant="h6" sx={{ mb: 1 }}>Set up</Typography>
+                        <Typography variant="body1" color="text.secondary">
+                            Place your feet on the mat. You can play while standing or seated for more stability.
+                        </Typography>
+                    </Box>
+
+                    {/* Play Time Section */}
+                    <Box sx={{ mb: 2 }}>
+                        <Typography variant="h6" sx={{ mb: 1 }}>Play Time</Typography>
+                        <Typography variant="body1" color="text.secondary">
+                            ~ 5 minutes
+                        </Typography>
+                    </Box>
+
+                    {/* Warnings Section */}
+                    <Box sx={{ mt: 4 }}>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            alignItems: 'center', 
+                            gap: 1, 
                             mb: 3,
-                            transition: "transform 0.3s ease-in-out",
-                            "&:hover": levelStatus[level.level].unlocked ? {
-                                transform: "scale(1.02)"
-                            } : undefined
+                            position: 'relative',
+                            width: '100%'
+                        }}>
+                            <Box sx={{ 
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1
+                            }}>
+                                <WarningIcon sx={{ color: '#FFA726' }} />
+                                <Typography variant="h6">WARNINGS</Typography>
+                            </Box>
+                            <Box sx={{
+                                width: '100%',
+                                height: '1px',
+                                bgcolor: '#E0E0E0',
+                                mt: 1
+                            }} />
+                        </Box>
+
+                        <Box>
+                            <Typography variant="h6" sx={{ mb: 1, color: 'text.secondary' }}>Fall Risk</Typography>
+                            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                            Be cautious while standing. Ensure you are in a safe environment with enough space to move freely.
+                            </Typography>
+
+                            <Typography variant="h6" sx={{ mb: 1, color: 'text.secondary' }}>Risk of Anxiety or Frustration</Typography>
+                            <Typography variant="body1" color="text.secondary">
+                            If you experience anxiety or frustration, take a break and speak to your physiotherapist.
+                            </Typography>
+                        </Box>
+                    </Box>
+                </Box>
+
+                {/* Right Column - Level Selection */}
+                <Box sx={{ 
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                }}>
+                    {/* Character Image */}
+                    <Box
+                        sx={{
+                            width: '100%',
+                            height: 350,
+                            borderRadius: 4,
+                            overflow: 'hidden',
+                            background: 'linear-gradient(135deg, #E67A26 0%, #FFB74D 100%)',
+                            mb: 3,
+                            position: 'relative',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center'
                         }}
                     >
-                        <Card
-                            onClick={() => {
-                                if (levelStatus[level.level].unlocked) {
-                                    navigate(`/balance-quest/${uid}/game/level/${level.level}`);
-                                }
-                            }}
+                        {/* Green checkmark in top-right */}
+                        <Box
                             sx={{
-                                background: levelStatus[level.level].unlocked 
-                                    ? `linear-gradient(135deg, ${level.color}, ${level.color}CC)`
-                                    : `linear-gradient(135deg, #808080, #A0A0A0)`,
-                                borderRadius: 3,
-                                p: 3,
-                                minHeight: "100px",
-                                display: "flex",
-                                flexDirection: "row",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                cursor: levelStatus[level.level].unlocked ? "pointer" : "not-allowed",
-                                transition: "box-shadow 0.3s ease-in-out",
-                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                                "&:hover": levelStatus[level.level].unlocked ? {
-                                    boxShadow: "0 8px 16px rgba(0,0,0,0.2)"
-                                } : undefined,
-                                color: "white",
-                                opacity: levelStatus[level.level].unlocked ? 1 : 0.7
+                                position: 'absolute',
+                                top: 16,
+                                right: 16,
+                                bgcolor: '#4CAF50',
+                                borderRadius: '50%',
+                                p: 0.5
                             }}
                         >
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                                <Typography variant="h4" sx={{ mr: 3, fontWeight: "bold" }}>
-                                    Level {level.level}
-                                </Typography>
-                                <Box>
-                                    <Typography variant="h6" sx={{ mb: 1 }}>
-                                        {level.title}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        {level.description}
-                                    </Typography>
-                                    {!levelStatus[level.level].unlocked && (
-                                        <Typography variant="body2" sx={{ mt: 1, color: "rgba(255, 255, 255, 0.8)" }}>
-                                            {level.level === 1 ? "Start here" : 
-                                             `Complete Level ${level.level - 1} with a perfect score to unlock`}
-                                        </Typography>
-                                    )}
-                                </Box>
-                            </Box>
-                            <Box sx={{ 
-                                display: "flex", 
-                                alignItems: "center", 
-                                justifyContent: "center",
-                                width: "60px",
-                                height: "60px",
-                                borderRadius: "50%",
-                                backgroundColor: "rgba(255, 255, 255, 0.2)"
-                            }}>
-                                {levelStatus[level.level].unlocked ? (
-                                    <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-                                        {level.level}
-                                    </Typography>
-                                ) : (
-                                    <LockIcon sx={{ fontSize: 30 }} />
-                                )}
-                            </Box>
-                        </Card>
+                            <CheckCircleIcon sx={{ color: 'white', fontSize: 24 }} />
+                        </Box>
+
+                        {/* Character icon */}
+                        <Box
+                            component="img"
+                            src="/balancequest.png"
+                            alt="Balance Quest Character"
+                            sx={{
+                                width: '50%',
+                                height: 'auto',
+                                filter: 'brightness(0) invert(1)', // Makes the image white
+                            }}
+                        />
                     </Box>
-                ))}
+
+                    {/* Level Selection */}
+                    <Box sx={{ 
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: 2,
+                        mb: 4,
+                        width: '100%',
+                        justifyContent: 'space-between'
+                    }}>
+                        {[1, 2, 3].map((level) => (
+                            <Box
+                                key={level}
+                                onClick={() => levelStatus[level].unlocked && setSelectedLevel(level)}
+                                sx={{
+                                    width: 'calc((100% - 16px) / 3)', // Account for gaps between boxes
+                                    height: 120,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    border: '1px solid',
+                                    borderColor: selectedLevel === level ? '#E67A26' : '#E0E0E0',
+                                    borderRadius: 2,
+                                    cursor: levelStatus[level].unlocked ? 'pointer' : 'default',
+                                    bgcolor: selectedLevel === level ? 'rgba(230, 122, 38, 0.05)' : 'white',
+                                    position: 'relative',
+                                    '&:hover': levelStatus[level].unlocked ? {
+                                        borderColor: '#E67A26',
+                                        bgcolor: 'rgba(230, 122, 38, 0.05)',
+                                    } : {}
+                                }}
+                            >
+                                <Typography
+                                    variant="h3"
+                                    sx={{
+                                        color: levelStatus[level].unlocked ? 
+                                            (selectedLevel === level ? '#E67A26' : '#666') : 
+                                            '#E0E0E0',
+                                        mb: 1
+                                    }}
+                                >
+                                    {level}
+                                </Typography>
+                                {!levelStatus[level].unlocked && (
+                                    <LockIcon 
+                                        sx={{ 
+                                            position: 'absolute',
+                                            top: 8,
+                                            right: 8,
+                                            color: '#E0E0E0'
+                                        }} 
+                                    />
+                                )}
+                                <Typography
+                                    variant="body2"
+                                    sx={{
+                                        color: selectedLevel === level ? '#E67A26' : 'text.secondary',
+                                        textAlign: 'center'
+                                    }}
+                                >
+                                    {levelStatus[level].unlocked ? 
+                                        `Level ${level}` : 
+                                        `Complete Level ${level-1} to Unlock`}
+                                </Typography>
+                            </Box>
+                        ))}
+                    </Box>
+
+                    {/* Play Now Button */}
+                    <Button
+                        variant="contained"
+                        disabled={!selectedLevel}
+                        onClick={() => navigate(`/balance-quest/${user.uid}/game/level/${selectedLevel}`)}
+                        sx={{
+                            width: '100%',
+                            py: 2,
+                            borderRadius: 8,
+                            bgcolor: '#E67A26',
+                            '&:hover': {
+                                bgcolor: '#D35F00',
+                            },
+                            '&.Mui-disabled': {
+                                bgcolor: '#E0E0E0',
+                            }
+                        }}
+                    >
+                        Play Now
+                    </Button>
+                </Box>
             </Box>
         </Box>
     );
