@@ -2,26 +2,26 @@ import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
   Button,
   Menu,
   MenuItem,
   CircularProgress,
-  Grid2,
+  Chip,
+  IconButton,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import SettingsIcon from '@mui/icons-material/Settings';
+import StarIcon from '@mui/icons-material/Star';
 
 const Dashboard = () => {
   const { uid } = useParams();
   const navigate = useNavigate();
-  const [anchorEl, setAnchorEl] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const open = Boolean(anchorEl);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -56,7 +56,7 @@ const Dashboard = () => {
     return () => unsubscribe();
   }, [uid, navigate]);
 
-  const handleClick = (event) => {
+  const handleSettingsClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -64,242 +64,361 @@ const Dashboard = () => {
     setAnchorEl(null);
   };
 
+  const handleSettingsNavigate = () => {
+    navigate(`/settings/${uid}`);
+    handleClose();
+  };
+
   const handleSignOut = async () => {
     try {
       await signOut(auth);
       navigate("/login");
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("Error signing out:", error);
     }
-    setAnchorEl(null);
+    handleClose();
   };
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
+      <Box sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+      }}>
         <CircularProgress />
       </Box>
     );
   }
 
   const firstName = userData?.firstName || "User";
-  const lastName = userData?.lastName || "";
-  const level = userData?.level || "";
 
   return (
-    <Box sx={{ p: 4, bgcolor: "#f9f9f9", minHeight: "100vh" }}>
+    <Box sx={{ 
+      p: 4, 
+      minHeight: "100vh",
+      height: "100vh",
+      background: "linear-gradient(180deg, #FFFFFF 0%, #F5F5F5 100%)",
+      display: "flex",
+      flexDirection: "column",
+      position: "relative",
+      overflow: "hidden"
+    }}>
+      {/* Background Decoration */}
       <Box
+        component="img"
+        src="/top-left-wavy.png"
+        alt=""
         sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "1000px",
+          height: "auto",
+          zIndex: 0,
+          pointerEvents: "none",
+          opacity: 0.8
+        }}
+      />
+      
+      {/* Content with higher z-index */}
+      <Box sx={{ position: "relative", zIndex: 1, height: "100%" }}>
+        {/* Header */}
+        <Box sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          mb: 2,
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Box
-            component="img"
-            src="/logo.png"
-            alt="NeuroMove Logo"
-            sx={{ width: 40, height: "auto", mr: 1 }}
-          />
-          <Typography variant="h6" component="span">
+          mb: 6,
+        }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              fontWeight: 'medium',
+              color: '#333'
+            }}
+          >
             N E U R O M O V E
           </Typography>
-        </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-        <Button
-          variant="text"
-          onClick={handleClick}
-          sx={{
-            textTransform: "none",
-            fontWeight: "bold",
-            color: "black",
-            border: "1px solid #000", // Black border for the boundary
-            borderRadius: "24px", // Rounded corners
-            padding: "4px 16px", // Padding for consistent spacing
-            ":hover": {
-              backgroundColor: "rgba(0, 0, 0, 0.1)", // Subtle hover effect
-            },
-          }}
-        >
-          {firstName} {lastName}
-        </Button>
-
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleClose}
-          >
-            <MenuItem onClick={() => {
-              navigate(`/settings/${uid}`);
-              handleClose();
-            }}>
-              Settings
-            </MenuItem>
-            <MenuItem onClick={handleSignOut}>Sign Out</MenuItem>
-          </Menu>
-        </Box>
-      </Box>
-
-      <Box sx={{ px: 2, maxWidth: 1200, mx: "auto" }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: 4,
-          }}
-        >
           <Box>
-            <Typography variant="h2" fontWeight="bold">
+            <IconButton 
+              onClick={handleSettingsClick}
+              sx={{
+                border: '1px solid rgba(0, 0, 0, 0.12)',
+                borderRadius: '24px',
+                padding: '8px 16px',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                }
+              }}
+            >
+              <SettingsIcon />
+              <Typography sx={{ ml: 1 }}>Settings</Typography>
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+            >
+              <MenuItem onClick={handleSettingsNavigate}>Settings</MenuItem>
+              <MenuItem onClick={handleSignOut}>Sign Out</MenuItem>
+            </Menu>
+          </Box>
+        </Box>
+
+        {/* Welcome and Stats Section */}
+        <Box sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          mb: 4,
+        }}>
+          {/* Welcome Message */}
+          <Box>
+            <Typography 
+              variant="h2" 
+              sx={{ 
+                fontWeight: "bold",
+                color: '#333',
+                mb: 1
+              }}
+            >
               Welcome back,
             </Typography>
-            <Typography variant="h2" fontWeight="bold">
+            <Typography 
+              variant="h2" 
+              sx={{ 
+                fontWeight: "bold",
+                color: '#333'
+              }}
+            >
               {firstName}!
             </Typography>
           </Box>
 
-          <Box
-            sx={{
-              backgroundColor: "#F0F0F0",
-              borderRadius: 3,
-              p: 2,
-              minWidth: 300,
-              minHeight: 100,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "left",
-            }}
-          >
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Streak Counter (TODO)
-            </Typography>
+          {/* Stats Box */}
+          <Box sx={{
+            bgcolor: "#F8F9FA",
+            borderRadius: 4,
+            p: 3,
+            minWidth: 625,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2
+          }}>
+            {/* Streaks */}
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                Streaks
+              </Typography>
+            </Box>
+
+            {/* Points */}
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <StarIcon sx={{ color: '#FFD700', mr: 1 }} />
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                500 points
+              </Typography>
+            </Box>
           </Box>
         </Box>
 
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            flexWrap: "nowrap",
-            gap: 4,
-            overflowX: "auto",
-            px: 2, // Add padding for responsiveness
-          }}
-        >
-          <Grid2 
-            item 
-            xs={12} 
-            md={4} 
+        {/* Games Grid */}
+        <Box sx={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 4,
+          mt: 4,
+          flex: 1,
+          '& > *': {
+            height: 'calc(100vh - 400px)',
+            maxHeight: '500px',
+          }
+        }}>
+          {/* Balance Quest Card */}
+          <Box
             onClick={() => navigate(`/balance-quest/${uid}/home-page`)}
             sx={{
-              cursor: 'pointer',
-              transition: 'transform 0.3s ease-in-out',
-              '&:hover': { 
-                transform: 'scale(1.05)',
-              }
+              borderRadius: 4,
+              overflow: "hidden",
+              cursor: "pointer",
+              background: "linear-gradient(135deg, #E67A26 0%, #FFB74D 100%)",
+              p: 3,
+              transition: "transform 0.3s ease-in-out",
+              display: "flex",
+              flexDirection: "column",
+              position: "relative",
+              "&:hover": {
+                transform: "scale(1.02)",
+                "& .game-description": {
+                  opacity: 1,
+                },
+                "& .game-image": {
+                  opacity: 0,
+                }
+              },
             }}
           >
-          <GameCard
-            title="Balance Quest"
-            description="Strengthen your balance and sharpen your mind by switching feet."
-            bgColor="orange"
-            image="/balancequest.png" // Replace with your image URL
-          />
-          </Grid2>
-          <GameCard
-            title="Beat Step"
-            description="Train your rhythm and coordination with stepping challenges."
-            bgColor="teal"
-            image="/beatstep.png" // Replace with your image URL
-          />
-          <Grid2 
-            item 
-            xs={12} 
-            md={4} 
-            onClick={() => navigate(`/reach-and-recall/${uid}/home-page`)} 
-            sx={{
-              cursor: 'pointer',
-              transition: 'transform 0.3s ease-in-out',
-              '&:hover': { 
-                transform: 'scale(1.05)',
-              }
-            }}
-          >
-            <GameCard
-              title="Reach & Recall"
-              description="Improve flexibility and memory by reaching and recalling items."
-              bgColor="pink"
-              image="/reachrecall.png"
-            />
-          </Grid2>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="h4" sx={{ color: "white", fontWeight: "bold", mb: 2 }}>
+                Balance Quest
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Chip
+                  label="Balance"
+                  sx={{
+                    bgcolor: "rgba(255, 255, 255, 0.2)",
+                    color: "white",
+                    borderRadius: "16px",
+                  }}
+                />
+                <Chip
+                  label="Decision Making"
+                  sx={{
+                    bgcolor: "rgba(255, 255, 255, 0.2)",
+                    color: "white",
+                    borderRadius: "16px",
+                  }}
+                />
+              </Box>
+            </Box>
+            
+            {/* Description (shows on hover) */}
+            <Typography 
+              className="game-description"
+              variant="h5" 
+              sx={{ 
+                color: "white",
+                textAlign: "center",
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "80%",
+                opacity: 0,
+                transition: "opacity 0.3s ease-in-out",
+                fontWeight: "medium"
+              }}
+            >
+              Strengthen your balance and sharping your mind by switching feet to sort the items right.
+            </Typography>
 
+            {/* Image (hides on hover) */}
+            <Box
+              className="game-image"
+              component="img"
+              src="/balancequest.png"
+              alt="Balance Quest"
+              sx={{
+                width: "100%",
+                height: "auto",
+                mt: "auto",
+                objectFit: "contain",
+                maxHeight: "60%",
+                opacity: 1,
+                transition: "opacity 0.3s ease-in-out"
+              }}
+            />
+          </Box>
+
+          {/* Reach & Recall Card */}
+          <Box
+            onClick={() => navigate(`/reach-and-recall/${uid}/home-page`)}
+            sx={{
+              borderRadius: 4,
+              overflow: "hidden",
+              cursor: "pointer",
+              background: "linear-gradient(135deg, #F46895 0%, #F8BBD0 100%)",
+              p: 3,
+              transition: "transform 0.3s ease-in-out",
+              display: "flex",
+              flexDirection: "column",
+              position: "relative",
+              "&:hover": {
+                transform: "scale(1.02)",
+                "& .game-description": {
+                  opacity: 1,
+                },
+                "& .game-image": {
+                  opacity: 0,
+                }
+              },
+            }}
+          >
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="h4" sx={{ color: "white", fontWeight: "bold", mb: 2 }}>
+                Reach & Recall
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Chip
+                  label="Reaching"
+                  sx={{
+                    bgcolor: "rgba(255, 255, 255, 0.2)",
+                    color: "white",
+                    borderRadius: "16px",
+                  }}
+                />
+                <Chip
+                  label="Memory"
+                  sx={{
+                    bgcolor: "rgba(255, 255, 255, 0.2)",
+                    color: "white",
+                    borderRadius: "16px",
+                  }}
+                />
+              </Box>
+            </Box>
+
+            {/* Description (shows on hover) */}
+            <Typography 
+              className="game-description"
+              variant="h5" 
+              sx={{ 
+                color: "white",
+                textAlign: "center",
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "80%",
+                opacity: 0,
+                transition: "opacity 0.3s ease-in-out",
+                fontWeight: "medium"
+              }}
+            >
+              Train your memory and improve flexibility by reaching and recalling the correct sequence of items.
+            </Typography>
+
+            {/* Image (hides on hover) */}
+            <Box
+              className="game-image"
+              component="img"
+              src="/reachrecall.png"
+              alt="Reach & Recall"
+              sx={{
+                width: "100%",
+                height: "auto",
+                mt: "auto",
+                objectFit: "contain",
+                maxHeight: "60%",
+                opacity: 1,
+                transition: "opacity 0.3s ease-in-out"
+              }}
+            />
+          </Box>
         </Box>
       </Box>
     </Box>
   );
 };
-
-const GameCard = ({ title, description, bgColor, image }) => {
-
-  const gradientColors = {
-    orange: "linear-gradient(135deg, #E67A26, #FFB74D)",
-    teal: "linear-gradient(135deg, #369B9F, #4DB6AC)",
-    pink: "linear-gradient(135deg, #F46895, #F8BBD0)",
-  };
-
-  return (
-    <Card
-      sx={{
-        width: 355,
-        height: 450,
-        borderRadius: 3,
-        background: gradientColors[bgColor] || gradientColors.orange, // Default to orange gradient
-        color: "#fff",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <CardContent>
-        <Typography variant="h5" fontWeight="bold">
-          {title}
-        </Typography>
-        <Typography variant="body2" sx={{ mt: 2 }}>
-          {description}
-        </Typography>
-      </CardContent>
-      {image && (
-        <Box
-          sx={{
-            paddingBottom: 2, // Adds padding to the bottom of the image
-            backgroundColor: "transparent", // Ensure padding blends with the card background
-          }}
-        >
-          <Box
-            component="img"
-            src={image}
-            alt={`${title} image`}
-            sx={{
-            width: "100%",
-            height: "100%", // Increased height to display the entire image
-            objectFit: "scale-down", // Ensures the image scales correctly
-            borderRadius: "5px",
-          }}
-          />
-        </Box>
-      )}
-    </Card>
-  );
-};
-
 
 export default Dashboard;
