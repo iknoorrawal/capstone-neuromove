@@ -1,6 +1,6 @@
 import random
 import subprocess
-from fastapi import Body, FastAPI
+from fastapi import Body, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from BalanceQuest.constants import Faces, Flags, Foods, Fruits, Animals, HandSymbols, Nature, Sports, Clothing
 from config import get_level_config
@@ -27,6 +27,59 @@ class GameProcess:
         self.scores = None
 
 game_state = GameProcess()
+
+LEVEL_CONFIG = {
+    1: {"items": 10},
+    2: {"items": 12},
+    3: {"items": 15}
+}
+
+@app.get("/game")
+async def get_game_data(level: int = Query(default=1, ge=1, le=3)):
+    # Get level configuration
+    config = LEVEL_CONFIG.get(level, LEVEL_CONFIG[1])
+    num_items = config["items"]
+
+    # List of all available categories
+    categories = [Faces, Flags, Foods, Fruits, Animals, HandSymbols, Nature, Sports, Clothing]
+    
+    # Randomly select a category
+    selected_category = random.choice(categories)
+    
+    # Always select exactly 3 items from the category for initial display
+    initial_items = random.sample(selected_category, 3)
+    
+    # Create a pool of items for guessing
+    guess_pool = []
+    
+    # Add some items from the same category
+    remaining_category_items = [item for item in selected_category if item not in initial_items]
+    num_same_category = num_items // 2
+    if remaining_category_items:
+        guess_pool.extend([
+            {"emoji": item[1], "inGroup": True}
+            for item in random.sample(remaining_category_items, min(num_same_category, len(remaining_category_items)))
+        ])
+    
+    # Add items from other categories
+    other_categories = [cat for cat in categories if cat != selected_category]
+    other_items = []
+    for cat in other_categories:
+        other_items.extend(cat)
+    
+    num_other_category = num_items - len(guess_pool)
+    guess_pool.extend([
+        {"emoji": item[1], "inGroup": False}
+        for item in random.sample(other_items, num_other_category)
+    ])
+    
+    # Shuffle the guess pool
+    random.shuffle(guess_pool)
+    
+    return {
+        "initialEmojis": [{"emoji": item[1]} for item in initial_items],
+        "guessEmojis": guess_pool
+    }
 
 def get_level_config(level):
     configs = {
