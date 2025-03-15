@@ -165,30 +165,40 @@ with mp_hands.Hands(
 
             # Measure wingspan
             if results.multi_hand_landmarks and wingspan == 0:
-                for idx, hand_landmarks in enumerate(results.multi_hand_landmarks):
-                    # Extract index finger tip coordinates
+                # Reset coordinates each time to avoid stale values
+                left_hand_coord = None
+                right_hand_coord = None
+                
+                # Get all hand landmarks first
+                hand_positions = []
+                for hand_landmarks in results.multi_hand_landmarks:
                     index_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
                     x, y = int(index_finger_tip.x * frame.shape[1]), int(index_finger_tip.y * frame.shape[0])
-
-                    # Assign left and right fingertip coordinates
-                    if idx == 0:
-                        left_hand_coord = (x, y)
-                    elif idx == 1:
-                        right_hand_coord = (x, y)
-
-                # Calculate wingspan
-                if left_hand_coord and right_hand_coord:
+                    hand_positions.append((x, y))
+                
+                # Sort by x-coordinate to determine left and right hands
+                if len(hand_positions) == 2:
+                    sorted_hands = sorted(hand_positions, key=lambda pos: pos[0])
+                    left_hand_coord = sorted_hands[0]
+                    right_hand_coord = sorted_hands[1]
+                    
+                    # Calculate wingspan
                     dx = right_hand_coord[0] - left_hand_coord[0]
                     dy = right_hand_coord[1] - left_hand_coord[1]
-                    wingspan = math.sqrt(dx**2 + dy**2)
+                    new_wingspan = math.sqrt(dx**2 + dy**2)
+                    
+                    # Only set wingspan if it's a reasonable value
+                    if new_wingspan > 100:  # Minimum reasonable wingspan
+                        wingspan = new_wingspan
 
             # circles after countdown ends and already not placed and valid wingspan
-            if countdown == 1 and not recorded and wingspan > 0:
-                game_start_time = time.time()
-                radius = wingspan / 2
-                center_x = (left_hand_coord[0] + right_hand_coord[0]) // 2
-                center_y = (left_hand_coord[1] + right_hand_coord[1]) // 2
-
+            if game_started and not recorded and wingspan > 0:  # Changed condition from countdown == 1
+                radius = min(wingspan / 2, frame.shape[1] / 3)  # Limit radius to 1/3 of screen width
+                
+                # Calculate center point
+                center_x = frame.shape[1] // 2  # Use screen center instead of hand midpoint
+                center_y = frame.shape[0] // 2
+                
                 # Start with target numbers and add random ones until we reach total_bubbles
                 numbers_to_display = target_numbers.copy()
                 while len(numbers_to_display) < total_bubbles:
@@ -201,9 +211,9 @@ with mp_hands.Hands(
                 angle_step = 2 * math.pi / num_points
                 additional_circles.clear()
                 for i in range(num_points):
-                    angle = i * angle_step #placing at equal angular interval 
-                    circle_x = int(center_x + radius * math.cos(angle)) #polar coordinate x
-                    circle_y = int(center_y + radius * math.sin(angle))#polar coordinate y
+                    angle = i * angle_step
+                    circle_x = int(center_x + radius * math.cos(angle))
+                    circle_y = int(center_y + radius * math.sin(angle))
 
                     # Keep circles within frame considering the margin
                     circle_x = max(screen_margin, min(frame.shape[1] - screen_margin, circle_x))
@@ -219,9 +229,8 @@ with mp_hands.Hands(
                         "message_bg": None,
                         "try_again_timestamp": None
                     })
-
+                
                 recorded = True
-                game_started = True
 
             # Draw additional game circles and their messages
             if game_started:
