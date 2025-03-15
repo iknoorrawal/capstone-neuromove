@@ -24,6 +24,17 @@ mp_drawing = mp.solutions.drawing_utils
 # Start capturing video
 cap = cv2.VideoCapture(0)
 
+# Create window and set it to fullscreen
+cv2.namedWindow('Hand Tracking Game', cv2.WINDOW_NORMAL)
+cv2.setWindowProperty('Hand Tracking Game', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
+# Get the screen dimensions
+screen_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+screen_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+# Adjust window size to match screen dimensions
+cv2.resizeWindow('Hand Tracking Game', screen_width, screen_height)
+
 # Countdown variables
 start_time = time.time()  # Start the timer
 countdown_duration = 5  # Countdown duration in seconds
