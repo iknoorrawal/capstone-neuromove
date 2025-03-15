@@ -60,10 +60,10 @@ correct_bg = (0, 255, 0)  # Green background
 # Add at the top with other game state variables
 game_start_time = None  # To track when gameplay actually starts
 
-
 # Add at top with other constants
 INITIAL_INSTRUCTION = "Please stand back, extend your arms and position your index fingers up"
-INITIAL_WAIT_TIME = 4  # Seconds to show initial instruction
+INITIAL_WAIT_TIME = 20  # Changed from 4 to 20 seconds
+INSTRUCTION_BG_COLOR = (203, 162, 255)  # Pink color in BGR format
 
 # Add with other state variables
 initial_instruction_shown = False
@@ -103,24 +103,48 @@ with mp_hands.Hands(
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = hands.process(frame_rgb)
 
-        # Show initial instruction
+        # Show initial instruction with countdown
         if not initial_instruction_shown:
+            # Calculate remaining time
+            elapsed_time = time.time() - initial_start_time
+            countdown = max(0, INITIAL_WAIT_TIME - int(elapsed_time))
+            
             font = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 1.2
+            instruction_scale = 1.2
+            countdown_scale = 4
             thickness = 2
             
-            # Calculate text size to center it
-            text_size = cv2.getTextSize(INITIAL_INSTRUCTION, font, font_scale, thickness)[0]
+            # Calculate text size and position for instruction
+            text_size = cv2.getTextSize(INITIAL_INSTRUCTION, font, instruction_scale, thickness)[0]
             text_x = (frame.shape[1] - text_size[0]) // 2  # Center horizontally
-            text_y = frame.shape[0] // 2  # Center vertically
+            text_y = frame.shape[0] // 2 - 100  # Increased space above countdown (changed from -50 to -100)
             
+            # Add background rectangle with padding for instruction
+            padding = 30  # Increased padding from 20 to 30
+            cv2.rectangle(frame, 
+                         (text_x - padding, text_y - text_size[1] - padding),
+                         (text_x + text_size[0] + padding, text_y + padding),
+                         INSTRUCTION_BG_COLOR, 
+                         -1)  # Filled rectangle
+            
+            # Add instruction text
             cv2.putText(frame, INITIAL_INSTRUCTION, 
                        (text_x, text_y), 
-                       font, font_scale, (255, 255, 255), thickness)
+                       font, instruction_scale, (255, 255, 255), thickness)
             
-            if time.time() - initial_start_time > INITIAL_WAIT_TIME:
+            # Draw countdown number with more space below instruction
+            countdown_text = f"{countdown}"
+            (count_width, _), _ = cv2.getTextSize(countdown_text, font, countdown_scale, 6)
+            count_x = (frame.shape[1] - count_width) // 2
+            cv2.putText(frame, countdown_text,
+                       (count_x, frame.shape[0] // 2 + 100),  # Increased space below (changed from +50 to +100)
+                       font, countdown_scale, (0, 255, 255), 6)
+            
+            if countdown == 0:
                 initial_instruction_shown = True
                 start_time = time.time()  # Reset timer for main game
+                game_start_time = time.time()  # Set game start time
+                game_started = True  # Start the game immediately after countdown
         else:
             # score display in the corner
             cv2.putText(frame, f"Correct: {correct_count}", (10, 30), 
@@ -128,25 +152,16 @@ with mp_hands.Hands(
             cv2.putText(frame, f"Incorrect: {incorrect_count}", (10, 70), 
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
             
-            # countdown logic
-            elapsed_time = time.time() - start_time
-            countdown = max(0, countdown_duration - int(elapsed_time))
-
-            if countdown > 0:
-                # countdown on the screen
-                cv2.putText(frame, f"{countdown}", (frame.shape[1] // 2 - 50, frame.shape[0] // 2),
-                            cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 255, 255), 6)
-            else:
-                # Only show gameplay instruction after countdown and when game has started
-                if game_started:
-                    # Get the text size to calculate centering
-                    (text_width, text_height), _ = cv2.getTextSize(GAMEPLAY_INSTRUCTION, cv2.FONT_HERSHEY_SIMPLEX, 2, 3)
-                    # Calculate X position to center the text
-                    x_center = (frame.shape[1] - text_width) // 2
-                    y_position = 50  # Keep the Y position after scores
-                    # Add the instruction text in a larger size and centered
-                    cv2.putText(frame, GAMEPLAY_INSTRUCTION, (x_center, y_position),
-                              cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
+            # Only show gameplay instruction when game has started
+            if game_started:
+                # Get the text size to calculate centering
+                (text_width, text_height), _ = cv2.getTextSize(GAMEPLAY_INSTRUCTION, cv2.FONT_HERSHEY_SIMPLEX, 2, 3)
+                # Calculate X position to center the text
+                x_center = (frame.shape[1] - text_width) // 2
+                y_position = 50  # Keep the Y position after scores
+                # Add the instruction text in a larger size and centered
+                cv2.putText(frame, GAMEPLAY_INSTRUCTION, (x_center, y_position),
+                          cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
 
             # Measure wingspan
             if results.multi_hand_landmarks and wingspan == 0:
