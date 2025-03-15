@@ -244,6 +244,8 @@ with mp_hands.Hands(
 
             # Detect fingertip interaction
             if results.multi_hand_landmarks and game_started:
+                # Track all index fingertips
+                index_fingertips = []
                 for hand_landmarks in results.multi_hand_landmarks:
                     # Draw hand landmarks
                     mp_drawing.draw_landmarks(
@@ -254,13 +256,19 @@ with mp_hands.Hands(
                         mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2)
                     )
 
+                    # Get index fingertip position
                     index_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
                     x, y = int(index_finger_tip.x * frame.shape[1]), int(index_finger_tip.y * frame.shape[0])
+                    index_fingertips.append((x, y))
 
-                    for circle in additional_circles:
-                        if circle["visible"]:
+                # Check each circle against all fingertips
+                for circle in additional_circles:
+                    if circle["visible"]:
+                        circle_id = f"{circle['x']}_{circle['y']}"
+                        
+                        # Check if any fingertip is touching this circle
+                        for x, y in index_fingertips:
                             distance = math.sqrt((circle["x"] - x)**2 + (circle["y"] - y)**2)
-                            circle_id = f"{circle['x']}_{circle['y']}"
                             
                             if distance < circle_radius:
                                 # Start or continue holding
@@ -303,9 +311,12 @@ with mp_hands.Hands(
                                     
                                     # Reset hold timer after processing
                                     circle_hold_start.pop(circle_id, None)
+                                break  # Exit the fingertip loop once we've found a touching finger
                             else:
-                                # Reset hold timer if finger moves away
-                                circle_hold_start.pop(circle_id, None)
+                                # Only reset hold timer if no fingertip is touching
+                                if all(math.sqrt((circle["x"] - fx)**2 + (circle["y"] - fy)**2) >= circle_radius 
+                                      for fx, fy in index_fingertips):
+                                    circle_hold_start.pop(circle_id, None)
 
             # Clean up hold timers for circles no longer being touched
             current_circles = {f"{circle['x']}_{circle['y']}" for circle in additional_circles if circle["visible"]}
