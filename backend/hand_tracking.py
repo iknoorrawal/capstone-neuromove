@@ -24,6 +24,17 @@ mp_drawing = mp.solutions.drawing_utils
 # Start capturing video
 cap = cv2.VideoCapture(0)
 
+# Create window and set it to fullscreen
+cv2.namedWindow('Hand Tracking Game', cv2.WINDOW_NORMAL)
+cv2.setWindowProperty('Hand Tracking Game', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
+# Get the screen dimensions
+screen_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+screen_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+# Adjust window size to match screen dimensions
+cv2.resizeWindow('Hand Tracking Game', screen_width, screen_height)
+
 # Countdown variables
 start_time = time.time()  # Start the timer
 countdown_duration = 5  # Countdown duration in seconds
@@ -60,10 +71,10 @@ correct_bg = (0, 255, 0)  # Green background
 # Add at the top with other game state variables
 game_start_time = None  # To track when gameplay actually starts
 
-
 # Add at top with other constants
 INITIAL_INSTRUCTION = "Please stand back, extend your arms and position your index fingers up"
-INITIAL_WAIT_TIME = 4  # Seconds to show initial instruction
+INITIAL_WAIT_TIME = 20  # Changed from 4 to 20 seconds
+INSTRUCTION_BG_COLOR = (203, 162, 255)  # Pink color in BGR format
 
 # Add with other state variables
 initial_instruction_shown = False
@@ -103,24 +114,48 @@ with mp_hands.Hands(
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = hands.process(frame_rgb)
 
-        # Show initial instruction
+        # Show initial instruction with countdown
         if not initial_instruction_shown:
+            # Calculate remaining time
+            elapsed_time = time.time() - initial_start_time
+            countdown = max(0, INITIAL_WAIT_TIME - int(elapsed_time))
+            
             font = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 1.2
+            instruction_scale = 1.2
+            countdown_scale = 4
             thickness = 2
             
-            # Calculate text size to center it
-            text_size = cv2.getTextSize(INITIAL_INSTRUCTION, font, font_scale, thickness)[0]
+            # Calculate text size and position for instruction
+            text_size = cv2.getTextSize(INITIAL_INSTRUCTION, font, instruction_scale, thickness)[0]
             text_x = (frame.shape[1] - text_size[0]) // 2  # Center horizontally
-            text_y = frame.shape[0] // 2  # Center vertically
+            text_y = frame.shape[0] // 2 - 100  # Increased space above countdown (changed from -50 to -100)
             
+            # Add background rectangle with padding for instruction
+            padding = 30  # Increased padding from 20 to 30
+            cv2.rectangle(frame, 
+                         (text_x - padding, text_y - text_size[1] - padding),
+                         (text_x + text_size[0] + padding, text_y + padding),
+                         INSTRUCTION_BG_COLOR, 
+                         -1)  # Filled rectangle
+            
+            # Add instruction text
             cv2.putText(frame, INITIAL_INSTRUCTION, 
                        (text_x, text_y), 
-                       font, font_scale, (255, 255, 255), thickness)
+                       font, instruction_scale, (255, 255, 255), thickness)
             
-            if time.time() - initial_start_time > INITIAL_WAIT_TIME:
+            # Draw countdown number with more space below instruction
+            countdown_text = f"{countdown}"
+            (count_width, _), _ = cv2.getTextSize(countdown_text, font, countdown_scale, 6)
+            count_x = (frame.shape[1] - count_width) // 2
+            cv2.putText(frame, countdown_text,
+                       (count_x, frame.shape[0] // 2 + 100),  # Increased space below (changed from +50 to +100)
+                       font, countdown_scale, (0, 255, 255), 6)
+            
+            if countdown == 0:
                 initial_instruction_shown = True
                 start_time = time.time()  # Reset timer for main game
+                game_start_time = time.time()  # Set game start time
+                game_started = True  # Start the game immediately after countdown
         else:
             # score display in the corner
             cv2.putText(frame, f"Correct: {correct_count}", (10, 30), 
@@ -128,52 +163,53 @@ with mp_hands.Hands(
             cv2.putText(frame, f"Incorrect: {incorrect_count}", (10, 70), 
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
             
-            # countdown logic
-            elapsed_time = time.time() - start_time
-            countdown = max(0, countdown_duration - int(elapsed_time))
-
-            if countdown > 0:
-                # countdown on the screen
-                cv2.putText(frame, f"{countdown}", (frame.shape[1] // 2 - 50, frame.shape[0] // 2),
-                            cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 255, 255), 6)
-            else:
-                # Only show gameplay instruction after countdown and when game has started
-                if game_started:
-                    # Get the text size to calculate centering
-                    (text_width, text_height), _ = cv2.getTextSize(GAMEPLAY_INSTRUCTION, cv2.FONT_HERSHEY_SIMPLEX, 2, 3)
-                    # Calculate X position to center the text
-                    x_center = (frame.shape[1] - text_width) // 2
-                    y_position = 50  # Keep the Y position after scores
-                    # Add the instruction text in a larger size and centered
-                    cv2.putText(frame, GAMEPLAY_INSTRUCTION, (x_center, y_position),
-                              cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
+            # Only show gameplay instruction when game has started
+            if game_started:
+                # Get the text size to calculate centering
+                (text_width, text_height), _ = cv2.getTextSize(GAMEPLAY_INSTRUCTION, cv2.FONT_HERSHEY_SIMPLEX, 2, 3)
+                # Calculate X position to center the text
+                x_center = (frame.shape[1] - text_width) // 2
+                y_position = 50  # Keep the Y position after scores
+                # Add the instruction text in a larger size and centered
+                cv2.putText(frame, GAMEPLAY_INSTRUCTION, (x_center, y_position),
+                          cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
 
             # Measure wingspan
             if results.multi_hand_landmarks and wingspan == 0:
-                for idx, hand_landmarks in enumerate(results.multi_hand_landmarks):
-                    # Extract index finger tip coordinates
+                # Reset coordinates each time to avoid stale values
+                left_hand_coord = None
+                right_hand_coord = None
+                
+                # Get all hand landmarks first
+                hand_positions = []
+                for hand_landmarks in results.multi_hand_landmarks:
                     index_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
                     x, y = int(index_finger_tip.x * frame.shape[1]), int(index_finger_tip.y * frame.shape[0])
-
-                    # Assign left and right fingertip coordinates
-                    if idx == 0:
-                        left_hand_coord = (x, y)
-                    elif idx == 1:
-                        right_hand_coord = (x, y)
-
-                # Calculate wingspan
-                if left_hand_coord and right_hand_coord:
+                    hand_positions.append((x, y))
+                
+                # Sort by x-coordinate to determine left and right hands
+                if len(hand_positions) == 2:
+                    sorted_hands = sorted(hand_positions, key=lambda pos: pos[0])
+                    left_hand_coord = sorted_hands[0]
+                    right_hand_coord = sorted_hands[1]
+                    
+                    # Calculate wingspan
                     dx = right_hand_coord[0] - left_hand_coord[0]
                     dy = right_hand_coord[1] - left_hand_coord[1]
-                    wingspan = math.sqrt(dx**2 + dy**2)
+                    new_wingspan = math.sqrt(dx**2 + dy**2)
+                    
+                    # Only set wingspan if it's a reasonable value
+                    if new_wingspan > 100:  # Minimum reasonable wingspan
+                        wingspan = new_wingspan
 
             # circles after countdown ends and already not placed and valid wingspan
-            if countdown == 1 and not recorded and wingspan > 0:
-                game_start_time = time.time()
-                radius = wingspan / 2
-                center_x = (left_hand_coord[0] + right_hand_coord[0]) // 2
-                center_y = (left_hand_coord[1] + right_hand_coord[1]) // 2
-
+            if game_started and not recorded and wingspan > 0:  # Changed condition from countdown == 1
+                radius = min(wingspan / 2, frame.shape[1] / 3)  # Limit radius to 1/3 of screen width
+                
+                # Calculate center point
+                center_x = frame.shape[1] // 2  # Use screen center instead of hand midpoint
+                center_y = frame.shape[0] // 2
+                
                 # Start with target numbers and add random ones until we reach total_bubbles
                 numbers_to_display = target_numbers.copy()
                 while len(numbers_to_display) < total_bubbles:
@@ -186,9 +222,9 @@ with mp_hands.Hands(
                 angle_step = 2 * math.pi / num_points
                 additional_circles.clear()
                 for i in range(num_points):
-                    angle = i * angle_step #placing at equal angular interval 
-                    circle_x = int(center_x + radius * math.cos(angle)) #polar coordinate x
-                    circle_y = int(center_y + radius * math.sin(angle))#polar coordinate y
+                    angle = i * angle_step
+                    circle_x = int(center_x + radius * math.cos(angle))
+                    circle_y = int(center_y + radius * math.sin(angle))
 
                     # Keep circles within frame considering the margin
                     circle_x = max(screen_margin, min(frame.shape[1] - screen_margin, circle_x))
@@ -204,9 +240,8 @@ with mp_hands.Hands(
                         "message_bg": None,
                         "try_again_timestamp": None
                     })
-
+                
                 recorded = True
-                game_started = True
 
             # Draw additional game circles and their messages
             if game_started:
@@ -244,6 +279,8 @@ with mp_hands.Hands(
 
             # Detect fingertip interaction
             if results.multi_hand_landmarks and game_started:
+                # Track all index fingertips
+                index_fingertips = []
                 for hand_landmarks in results.multi_hand_landmarks:
                     # Draw hand landmarks
                     mp_drawing.draw_landmarks(
@@ -254,13 +291,19 @@ with mp_hands.Hands(
                         mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2)
                     )
 
+                    # Get index fingertip position
                     index_finger_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
                     x, y = int(index_finger_tip.x * frame.shape[1]), int(index_finger_tip.y * frame.shape[0])
+                    index_fingertips.append((x, y))
 
-                    for circle in additional_circles:
-                        if circle["visible"]:
+                # Check each circle against all fingertips
+                for circle in additional_circles:
+                    if circle["visible"]:
+                        circle_id = f"{circle['x']}_{circle['y']}"
+                        
+                        # Check if any fingertip is touching this circle
+                        for x, y in index_fingertips:
                             distance = math.sqrt((circle["x"] - x)**2 + (circle["y"] - y)**2)
-                            circle_id = f"{circle['x']}_{circle['y']}"
                             
                             if distance < circle_radius:
                                 # Start or continue holding
@@ -303,9 +346,12 @@ with mp_hands.Hands(
                                     
                                     # Reset hold timer after processing
                                     circle_hold_start.pop(circle_id, None)
+                                break  # Exit the fingertip loop once we've found a touching finger
                             else:
-                                # Reset hold timer if finger moves away
-                                circle_hold_start.pop(circle_id, None)
+                                # Only reset hold timer if no fingertip is touching
+                                if all(math.sqrt((circle["x"] - fx)**2 + (circle["y"] - fy)**2) >= circle_radius 
+                                      for fx, fy in index_fingertips):
+                                    circle_hold_start.pop(circle_id, None)
 
             # Clean up hold timers for circles no longer being touched
             current_circles = {f"{circle['x']}_{circle['y']}" for circle in additional_circles if circle["visible"]}
