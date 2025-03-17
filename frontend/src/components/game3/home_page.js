@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../../firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Button, CircularProgress } from "@mui/material";
 import LockIcon from '@mui/icons-material/Lock';
@@ -9,83 +8,90 @@ import { collection, query, where, getDocs, orderBy, limit } from "firebase/fire
 
 const ReachAndRecallLevelsPage = ({ user }) => {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
     const [levelStatus, setLevelStatus] = useState({
-        1: { unlocked: true }, // Level 1 always unlocked
+        1: { unlocked: true },
         2: { unlocked: false },
         3: { unlocked: false }
     });
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-
-        const checkLevelAccess = async () => {
+        const updateUserData = async () => {
             try {
-                const gameRef = collection(db, "users", user.uid, "game3");
-                
-                // Initialize with level 1 unlocked
-                const newLevelStatus = {
-                    1: { unlocked: true },
-                    2: { unlocked: false },
-                    3: { unlocked: false }
-                };
-
-                // Check for any perfect completion of level 1
-                const level1Query = query(
-                    gameRef,
-                    where("level", "==", 1),
-                    where("incorrect_count", "==", 0),  // Look for any perfect completion
-                    limit(1)  // We only need to know if at least one exists
-                );
-
-                const level1Snapshot = await getDocs(level1Query);
-                console.log("Level 1 has perfect completion:", !level1Snapshot.empty);
-                
-                // If level 1 was ever completed perfectly, unlock level 2 permanently
-                if (!level1Snapshot.empty) {
-                    newLevelStatus[2].unlocked = true;
-                    console.log("Level 2 unlocked");
-
-                    // Check for any perfect completion of level 2
-                    const level2Query = query(
-                        gameRef,
-                        where("level", "==", 2),
-                        where("incorrect_count", "==", 0),
-                        limit(1)
-                    );
-
-                    const level2Snapshot = await getDocs(level2Query);
-                    console.log("Level 2 has perfect completion:", !level2Snapshot.empty);
-                    
-                    // If level 2 was ever completed perfectly, unlock level 3 permanently
-                    if (!level2Snapshot.empty) {
-                        newLevelStatus[3].unlocked = true;
-                        console.log("Level 3 unlocked");
-                    }
+                if (!user) {
+                    navigate('/login');
+                    return;
                 }
 
-                console.log("Final level status:", newLevelStatus);
-                setLevelStatus(newLevelStatus);
-                setLoading(false);
+                const userRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userRef);
+
+                if (userSnap.exists()) {
+                    const userData = userSnap.data();
+                    const currentTime = new Date();
+
+                    // Initialize streaks and lastLogin if they don't exist
+                    const lastLogin = userData.lastLogin ? userData.lastLogin.toDate() : currentTime;
+                    const currentStreak = userData.streaks || 0;
+
+                    const timeDifference = (currentTime - lastLogin) / (1000 * 60 * 60); // Convert to hours
+
+                    let updatedStreak = currentStreak;
+
+                    if (timeDifference >= 24 && timeDifference <= 48) {
+                        updatedStreak += 1;
+                    } else if (timeDifference > 48) {
+                        updatedStreak = 0;
+                    }
+
+                    // Check for completed levels and update level status
+                    const completedLevelsRef = collection(db, "completedLevels");
+                    const q = query(
+                        completedLevelsRef,
+                        where("userId", "==", user.uid),
+                        where("game", "==", "reach-and-recall"),
+                        orderBy("completedAt", "desc")
+                    );
+                    
+                    const completedLevelsSnap = await getDocs(q);
+                    const newLevelStatus = { ...levelStatus };
+                    
+                    completedLevelsSnap.forEach((doc) => {
+                        const levelData = doc.data();
+                        const completedLevel = parseInt(levelData.level);
+                        if (levelData.accuracy === 100) {
+                            // Unlock the next level if 100% accuracy was achieved
+                            if (completedLevel < 3) {
+                                newLevelStatus[completedLevel + 1] = { unlocked: true };
+                            }
+                        }
+                    });
+                    
+                    setLevelStatus(newLevelStatus);
+
+                    await updateDoc(userRef, {
+                        streaks: updatedStreak,
+                        lastLogin: Timestamp.fromDate(currentTime),
+                    });
+                }
             } catch (error) {
-                console.error("Error checking level access:", error);
+                console.error("Error updating user data:", error);
+            } finally {
                 setLoading(false);
             }
         };
 
-        checkLevelAccess();
+        updateUserData();
     }, [user, navigate]);
 
     const handleStartGame = (level) => {
+        navigate(`/reach-and-recall/${user.uid}/instructions/level/${level}`);
         if (levelStatus[level].unlocked) {
             navigate(`/reach-and-recall/${user.uid}/instructions/level/${level}`);
         }
     };
 
-    if (!user || loading) {
+    if (loading) {
         return (
             <Box sx={{
                 display: "flex",
@@ -96,6 +102,10 @@ const ReachAndRecallLevelsPage = ({ user }) => {
                 <CircularProgress />
             </Box>
         );
+    }
+
+    if (!user) {
+        return null;
     }
 
     const levels = [
@@ -115,7 +125,25 @@ const ReachAndRecallLevelsPage = ({ user }) => {
             padding: 3,
             background: "linear-gradient(180deg, #ff9aa2 0%, #ffb1c1 100%)",
             position: "relative"
+            position: "relative"
         }}>
+            <Button
+                onClick={() => navigate(`/dashboard/${user.uid}`)}
+                sx={{
+                    position: 'absolute',
+                    top: 20,
+                    left: 20,
+                    backgroundColor: '#d63384',
+                    color: 'white',
+                    '&:hover': {
+                        backgroundColor: '#c02674',
+                    },
+                    zIndex: 10
+                }}
+            >
+                Exit Game
+            </Button>
+
             <Button
                 onClick={() => navigate(`/dashboard/${user.uid}`)}
                 sx={{
