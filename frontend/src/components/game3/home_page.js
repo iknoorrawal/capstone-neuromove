@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { auth, db } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -7,6 +7,7 @@ import { Box, Typography, Button, CircularProgress } from "@mui/material";
 import LockIcon from '@mui/icons-material/Lock';
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 
 const ReachAndRecallLevelsPage = ({ user }) => {
@@ -18,6 +19,8 @@ const ReachAndRecallLevelsPage = ({ user }) => {
     });
     const [loading, setLoading] = useState(true);
     const [selectedLevel, setSelectedLevel] = useState(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const videoRef = useRef(null);
 
     useEffect(() => {
         if (!user) {
@@ -77,6 +80,17 @@ const ReachAndRecallLevelsPage = ({ user }) => {
     const handleStartGame = () => {
         if (selectedLevel && levelStatus[selectedLevel].unlocked) {
             navigate(`/reach-and-recall/${user.uid}/instructions/level/${selectedLevel}`);
+        }
+    };
+
+    const handlePlayPause = () => {
+        if (videoRef.current) {
+            if (isPlaying) {
+                videoRef.current.pause();
+            } else {
+                videoRef.current.play();
+            }
+            setIsPlaying(!isPlaying);
         }
     };
 
@@ -206,43 +220,66 @@ const ReachAndRecallLevelsPage = ({ user }) => {
                     flexDirection: "column",
                     alignItems: "center",
                 }}>
-                    {/* Character Image */}
+                    {/* Video Player */}
                     <Box
                         sx={{
                             width: '100%',
                             height: 350,
                             borderRadius: 4,
                             overflow: 'hidden',
-                            background: 'linear-gradient(135deg, #F46895 0%, #F8BBD0 100%)',
                             mb: 3,
                             position: 'relative',
                             display: 'flex',
                             justifyContent: 'center',
-                            alignItems: 'center'
+                            alignItems: 'center',
+                            bgcolor: '#000'  // Black background for video
                         }}
                     >
-                        {/* Green checkmark in top-right */}
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                top: 16,
-                                right: 16,
-                                bgcolor: '#4CAF50',
-                                borderRadius: '50%',
-                                p: 0.5
+                        <video
+                            ref={videoRef}
+                            loop
+                            muted
+                            playsInline
+                            onEnded={() => setIsPlaying(false)}
+                            onPause={() => setIsPlaying(false)}
+                            onPlay={() => setIsPlaying(true)}
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain',
+                                borderRadius: '16px',
+                                backgroundColor: '#000'
                             }}
                         >
-                            <CheckCircleIcon sx={{ color: 'white', fontSize: 24 }} />
-                        </Box>
-
-                        {/* Character icon */}
-                        <Box
-                            sx={{
-                                width: '50%',
-                                height: 'auto',
-                                filter: 'brightness(0) invert(1)', // Makes the image white
-                            }}
-                        />
+                            <source src="/videos/demo.mp4" type="video/mp4" />
+                            Your browser does not support the video tag.
+                        </video>
+                        {!isPlaying && (
+                            <Box
+                                onClick={handlePlayPause}
+                                sx={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    width: 80,
+                                    height: 80,
+                                    borderRadius: '50%',
+                                    bgcolor: 'rgba(255, 255, 255, 0.8)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    '&:hover': {
+                                        bgcolor: 'rgba(255, 255, 255, 0.9)',
+                                        transform: 'translate(-50%, -50%) scale(1.1)',
+                                    }
+                                }}
+                            >
+                                <PlayArrowIcon sx={{ fontSize: 40, color: '#C1436D' }} />
+                            </Box>
+                        )}
                     </Box>
 
                     {/* Level Selection */}
