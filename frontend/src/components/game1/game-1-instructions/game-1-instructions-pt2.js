@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import "./game-1-instructions-pt2.css";
-import Game1InstructionsComplete from "./game-1-instructions-complete"; // ✅ Import final screen
+import Game1InstructionsComplete from "./game-1-instructions-complete"; //  Import final screen
+import "./bucket.css";
 
 const Game1InstructionsPart2 = ({ onComplete, onBack }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -15,7 +16,7 @@ const Game1InstructionsPart2 = ({ onComplete, onBack }) => {
   const steps = [
     { text: "Similar items go in the green bin.", item: null, correctBin: null },
     { text: "Balance on your left foot to select the green bin.", item: "/pineapple.png", correctBin: "green" },
-    { text: "Let’s try another example.", item: "/car.png", correctBin: "garbage" },
+    { text: "Let's try another example.", item: "/car.png", correctBin: "garbage" },
   ];
 
   // Auto-advance first step after 2s
@@ -131,11 +132,21 @@ const Game1InstructionsPart2 = ({ onComplete, onBack }) => {
 
       {/* Fixed Bins */}
       <div className="bins-container">
-        <div className="bin-wrapper">
-          <img className="green-bin" src="/bucket.png" alt="Green Bin" />
+        <div className="correct-bin"
+            style={{
+              left: '30%', /* Adjust this value for spacing */
+              transform: 'translateX(-50%)', /* Center the bin */
+            }}
+        >
+          CORRECT
         </div>
-        <div className="bin-wrapper">
-          <img className="garbage-bin" src="/garbage.png" alt="Garbage Bin" />
+        <div className="incorrect-bin"
+            style={{
+              left: '70%', /* Adjust this value for spacing */
+              transform: 'translateX(-50%)', /* Center the bin */
+            }}
+        >
+          INCORRECT
         </div>
       </div>
     </div>

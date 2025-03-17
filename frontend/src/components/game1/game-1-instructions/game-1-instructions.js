@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import "./game-1-instructions.css";
 import Game1InstructionsPart2 from "./game-1-instructions-pt2";
 import Game1InstructionsComplete from "./game-1-instructions-complete";
+import { useNavigate, useParams } from "react-router-dom";
+import "./bucket.css";
 
 const fruits = [
   { id: 1, name: "mango", src: "/mango.png" },
@@ -10,6 +12,8 @@ const fruits = [
 ];
 
 const Game1Instructions = ({ onComplete, onBack }) => {
+  const navigate = useNavigate();
+  const { uid } = useParams(); // Get user ID from URL parameters
   const [showPart2, setShowPart2] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
   const [currentFruitIndex, setCurrentFruitIndex] = useState(0);
@@ -43,8 +47,10 @@ const Game1Instructions = ({ onComplete, onBack }) => {
     <div key={resetKey}> {/* Force re-render when resetKey changes */}
       {showComplete ? (
         <Game1InstructionsComplete
-          onRepeat={handleRepeat} // Pass handleRepeat to the complete screen
+          onRepeat={handleRepeat}
           onPlay={onComplete}
+          uid={uid}
+          onRestart={() => navigate(`/game-1-instructions/${uid}`)}
         />
       ) : showPart2 ? (
         <Game1InstructionsPart2
@@ -69,9 +75,12 @@ const Game1Instructions = ({ onComplete, onBack }) => {
               </div>
             ))}
           </div>
-          <img className="bucket" src="/bucket.png" alt="Bucket" />
-          <button className="next-button" onClick={() => setShowPart2(true)}>
-            Continue
+          <div className="correct-bin"
+            style={{left: "50%", /* Center horizontally */
+            transform: "translateX(-50%)", /* Center the bin */}}
+          >CORRECT</div>
+          <button className="exit-button" onClick={() => navigate(`/reach-and-recall/${uid}/home-page`)}>
+            Exit Game
           </button>
         </div>
       )}
