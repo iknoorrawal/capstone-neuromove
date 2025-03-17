@@ -4,6 +4,7 @@ from fastapi import Body, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from BalanceQuest.constants import Faces, Flags, Foods, Fruits, Animals, HandSymbols, Nature, Sports, Clothing
 from config import get_level_config
+from data_report import generate_report
 
 app = FastAPI()
 
@@ -221,3 +222,9 @@ async def get_game_data():
         "initialEmojis": initial_emojis_data,
         "guessEmojis": guess_emojis
     }
+
+
+
+@app.get("/generate-data-report")
+async def generate_data_report():
+    return generate_report()
