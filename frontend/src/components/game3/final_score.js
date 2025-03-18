@@ -4,6 +4,7 @@ import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import { collection, addDoc, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { calculateScore } from './game_config';
+import {updateStreakAndActivity} from "../../updateStreakAndActivity";
 
 const FinalScore = ({ user }) => {
     const location = useLocation();
@@ -39,11 +40,21 @@ const FinalScore = ({ user }) => {
                     numbers: location.state.numbers,
                 });
 
-                // Update totalPoints in user's document
-                const userRef = doc(db, "users", user.uid);
-                await updateDoc(userRef, {
-                totalPoints: increment(score)
-                });
+                // Update totalPoints in user's document - this is replaced with the updateStreakAndActivity call
+                // const userRef = doc(db, "users", user.uid);
+                // await updateDoc(userRef, {
+                // totalPoints: increment(score)
+                // });
+                
+                // Update streak and activity with the points earned from this game
+                const streakResult = await updateStreakAndActivity(db, user.uid, score);
+                console.log('Streak update result:', streakResult);
+
+                // Check if the user ranked up
+                if (streakResult.hasRankedUp) {
+                    console.log(`User ranked up to ${streakResult.newRankName}!`);
+                    // You could store this information to show a rank-up notification
+                }
 
             } catch (error) {
                 console.error("Error storing score:", error);
@@ -62,8 +73,6 @@ const FinalScore = ({ user }) => {
     }
 
     const score = calculateScore(location.state.incorrect, location.state.level);
-
-      // update in firebase here 
 
     return (
         <Box
@@ -121,4 +130,4 @@ const FinalScore = ({ user }) => {
     );
 };
 
-export default FinalScore; 
+export default FinalScore;
