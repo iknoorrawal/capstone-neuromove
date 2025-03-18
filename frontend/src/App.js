@@ -14,6 +14,7 @@ import BalanceQuest from "./components/game1/game_logic";
 import FinalScore from './components/game3/final_score';
 import BalanceQuestLevelsPage from "./components/game1/home_page";
 import ArduinoTest from './components/ArduinoTest';
+import BalanceGame from './components/balance-quest/BalanceGame';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -51,6 +52,7 @@ const App = () => {
         <Route path="/balance-quest/:uid/home-page" element={<BalanceQuestLevelsPage user={user} />} />
         <Route path="/balance-quest/:uid/game/level/:level" element={<BalanceQuest user={user} />} />
         <Route path="/testing-arduino" element={<ArduinoTest />} />
+        <Route path="/balance-quest" element={<BalanceGame />} />
       </Routes>
     </Router>   
   );

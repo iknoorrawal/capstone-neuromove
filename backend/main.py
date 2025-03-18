@@ -28,7 +28,7 @@ app.add_middleware(
 
 # Initialize Arduino connection
 try:
-    arduino = serial.Serial('/dev/cu.usbserial-1120', 9600, timeout=1)
+    arduino = serial.Serial('/dev/cu.usbserial-0001', 9600, timeout=1)
     print("✅ Successfully connected to Arduino")
 except Exception as e:
     print(f"❌ Failed to connect to Arduino: {e}")
@@ -181,18 +181,18 @@ def get_latest_arduino_data():
     if not arduino:
         return 0, 0
 
-    # Clear old data
-    arduino.flushInput()
-    
     try:
         # Read the latest line
         line = arduino.readline().decode().strip()
         print(f"Arduino data: {line}")  # Debug print
         
-        # Parse the values
-        values = line.split()
+        # Split by comma since data comes as "0,0"
+        values = line.split(',')
         if len(values) == 2:
-            return float(values[0]), float(values[1])
+            left = float(values[0])
+            right = float(values[1])
+            return left, right
+            
     except Exception as e:
         print(f"Error reading Arduino: {e}")
     
