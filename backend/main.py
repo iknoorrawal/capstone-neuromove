@@ -1,9 +1,12 @@
 import random
 import subprocess
-from fastapi import Body, FastAPI, Query
+from fastapi import Body, FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from BalanceQuest.constants import Faces, Flags, Foods, Fruits, Animals, HandSymbols, Nature, Sports, Clothing
 from config import get_level_config
+import os
+from data_report import generate_report_for_user
 
 app = FastAPI()
 
@@ -221,3 +224,57 @@ async def get_game_data():
         "initialEmojis": initial_emojis_data,
         "guessEmojis": guess_emojis
     }
+
+@app.get("/api/generate-report/{uid}")
+async def generate_report_endpoint(uid: str):
+    pdf_path = None
+    try:
+        print(f"\n=== Starting PDF generation for user: {uid} ===")
+        pdf_path = generate_report_for_user(uid)
+        print(f"Received PDF path: {pdf_path}")
+        
+        if not pdf_path:
+            print("No PDF path returned")
+            raise HTTPException(status_code=400, detail="Failed to generate report - no path returned")
+            
+        if not os.path.exists(pdf_path):
+            print(f"PDF file does not exist at path: {pdf_path}")
+            raise HTTPException(status_code=400, detail="Failed to generate report - file not found")
+            
+        print(f"Preparing to send file: {pdf_path}")
+        response = FileResponse(
+            pdf_path,
+            media_type='application/pdf',
+            filename='neuromove_performance_report.pdf'
+        )
+        
+        # Add background task to remove the file after sending
+        async def cleanup_file():
+            try:
+                if os.path.exists(pdf_path):
+                    os.remove(pdf_path)
+                    print(f"Successfully cleaned up file: {pdf_path}")
+            except Exception as e:
+                print(f"Error cleaning up file: {str(e)}")
+                
+        response.background = cleanup_file
+        print("Sending response to client")
+        return response
+        
+    except ValueError as e:
+        print(f"User not found error: {str(e)}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        print(f"Error in generate_report_endpoint: {str(e)}")
+        print(f"Error type: {type(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        
+        # Clean up the PDF file if it was created
+        if pdf_path and os.path.exists(pdf_path):
+            try:
+                os.remove(pdf_path)
+                print(f"Cleaned up PDF file after error: {pdf_path}")
+            except:
+                pass
+        raise HTTPException(status_code=500, detail=str(e))
