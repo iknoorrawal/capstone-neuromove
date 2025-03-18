@@ -130,8 +130,8 @@ function BalanceQuest() {
     }
     goToNextGuess();
   };
-
-  useEffect(() => {
+  
+    useEffect(() => {
     if (done && !dataSaved && gameData) {
       const docRef = doc(db, `users/${uid}/game1/${gameId}`);
 

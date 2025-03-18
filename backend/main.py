@@ -1,9 +1,12 @@
 import random
 import subprocess
-from fastapi import Body, FastAPI, Query
+from fastapi import Body, FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from BalanceQuest.constants import Faces, Flags, Foods, Fruits, Animals, HandSymbols, Nature, Sports, Clothing
 from config import get_level_config
+import os
+from data_report import generate_report_for_user
 
 app = FastAPI()
 
@@ -221,3 +224,22 @@ async def get_game_data():
         "initialEmojis": initial_emojis_data,
         "guessEmojis": guess_emojis
     }
+
+@app.get("/api/generate-report/{uid}")
+async def generate_report_endpoint(uid: str):
+    try:
+        pdf_path = generate_report_for_user(uid)
+        if pdf_path and os.path.exists(pdf_path):
+            response = FileResponse(
+                pdf_path,
+                media_type='application/pdf',
+                filename='neuromove_performance_report.pdf'
+            )
+            # Clean up will be handled by FastAPI after sending the file
+            return response
+        else:
+            raise HTTPException(status_code=400, detail="Failed to generate report")
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
