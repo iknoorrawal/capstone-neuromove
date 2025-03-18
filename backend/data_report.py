@@ -115,12 +115,16 @@ def create_game3_graph(game3_details):
     
     return img_data
 
-def generate_pdf_report(user_info, game1_details, game3_details):
+def generate_pdf_report(user_info, game1_details, game3_details, pdf_path):
+    # Filter out records with None timestamps and then sort
+    game1_details = [game for game in game1_details if game.get("timestamp") is not None]
+    game3_details = [game for game in game3_details if game.get("timestamp") is not None]
+    
     # Sort game details by date
     game1_details.sort(key=lambda x: x.get("timestamp"))
     game3_details.sort(key=lambda x: x.get("timestamp"))
     
-    doc = SimpleDocTemplate("user_report.pdf", pagesize=letter)
+    doc = SimpleDocTemplate(pdf_path, pagesize=letter)
     styles = getSampleStyleSheet()
     elements = []
 
@@ -279,53 +283,85 @@ def generate_pdf_report(user_info, game1_details, game3_details):
     doc.build(elements)
 
 def generate_report_for_user(uid: str) -> str:
-    user_ref = db.collection("users").document(uid)
-    user_doc = user_ref.get()
+    try:
+        print(f"Starting report generation for user: {uid}")
+        user_ref = db.collection("users").document(uid)
+        user_doc = user_ref.get()
 
-    if not user_doc.exists:
-        raise ValueError("User not found")
+        if not user_doc.exists:
+            print(f"User not found: {uid}")
+            raise ValueError("User not found")
 
-    user_data = user_doc.to_dict()
-    user_info = {
-        "firstName": user_data.get("firstName"),
-        "lastName": user_data.get("lastName"),
-        "height": user_data.get("height"),
-        "weight": user_data.get("weight"),
-        "email": user_data.get("email")
-    }
-    
-    # Get Game 1 data
-    game1_ref = user_ref.collection("game1")
-    game1_docs = game1_ref.stream()
-    game1_details = []
-    for doc in game1_docs:
-        data = doc.to_dict()
-        game_data = {
-            "correct_count": data.get("correct_count"),
-            "incorrect_count": data.get("incorrect_count"),
-            "score": data.get("score"),
-            "timestamp": data.get("timestamp"),
-            "level": data.get("level")
+        user_data = user_doc.to_dict()
+        print(f"Retrieved user data: {user_data}")
+        user_info = {
+            "firstName": user_data.get("firstName"),
+            "lastName": user_data.get("lastName"),
+            "height": user_data.get("height"),
+            "weight": user_data.get("weight"),
+            "email": user_data.get("email")
         }
-        game1_details.append(game_data)
+        
+        # Get Game 1 data
+        print("Fetching Game 1 data...")
+        game1_ref = user_ref.collection("game1")
+        game1_docs = game1_ref.stream()
+        game1_details = []
+        for doc in game1_docs:
+            data = doc.to_dict()
+            game_data = {
+                "correct_count": data.get("correct_count"),
+                "incorrect_count": data.get("incorrect_count"),
+                "score": data.get("score"),
+                "timestamp": data.get("timestamp"),
+                "level": data.get("level")
+            }
+            game1_details.append(game_data)
+        print(f"Found {len(game1_details)} Game 1 records")
 
-    # Get Game 3 data
-    game3_ref = user_ref.collection("game3")
-    game3_docs = game3_ref.stream()
-    game3_details = []
-    for doc in game3_docs:
-        data = doc.to_dict()
-        game_data = {
-            "correct_count": data.get("correct_count"),
-            "incorrect_count": data.get("incorrect_count"),
-            "score": data.get("score"),
-            "timestamp": data.get("timestamp"),
-            "level": data.get("level")
-        }
-        game3_details.append(game_data)
+        # Get Game 3 data
+        print("Fetching Game 3 data...")
+        game3_ref = user_ref.collection("game3")
+        game3_docs = game3_ref.stream()
+        game3_details = []
+        for doc in game3_docs:
+            data = doc.to_dict()
+            game_data = {
+                "correct_count": data.get("correct_count"),
+                "incorrect_count": data.get("incorrect_count"),
+                "score": data.get("score"),
+                "timestamp": data.get("timestamp"),
+                "level": data.get("level")
+            }
+            game3_details.append(game_data)
+        print(f"Found {len(game3_details)} Game 3 records")
 
-    # Generate PDF report
-    pdf_path = f"temp_{uid}.pdf"
-    generate_pdf_report(user_info, game1_details, game3_details)
-    
-    return pdf_path
+        # Create temp directory if it doesn't exist
+        temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp")
+        os.makedirs(temp_dir, exist_ok=True)
+        print(f"Created/verified temp directory at: {temp_dir}")
+        
+        # Generate PDF report with absolute path
+        pdf_path = os.path.join(temp_dir, f"report_{uid}.pdf")
+        print(f"Generating PDF at: {pdf_path}")
+        
+        try:
+            generate_pdf_report(user_info, game1_details, game3_details, pdf_path)
+            print("PDF generation completed successfully")
+        except Exception as pdf_error:
+            print(f"Error during PDF generation: {str(pdf_error)}")
+            raise
+        
+        if not os.path.exists(pdf_path):
+            print("PDF file was not created")
+            raise Exception("PDF file was not created")
+            
+        print(f"PDF file created successfully at: {pdf_path}")
+        return pdf_path
+        
+    except Exception as e:
+        print(f"Error generating report: {str(e)}")
+        print(f"Error type: {type(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise
