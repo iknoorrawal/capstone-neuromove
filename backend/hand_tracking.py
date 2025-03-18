@@ -72,9 +72,10 @@ correct_bg = (0, 255, 0)  # Green background
 game_start_time = None  # To track when gameplay actually starts
 
 # Add at top with other constants
-INITIAL_INSTRUCTION = "Please stand back, extend your arms and position your index fingers up"
-INITIAL_WAIT_TIME = 20  # Changed from 4 to 20 seconds
-INSTRUCTION_BG_COLOR = (203, 162, 255)  # Pink color in BGR format
+INITIAL_INSTRUCTION = "1. Step back until your full wingspan is in the view\n2. Extend arms outward"
+INITIAL_WAIT_TIME = 20 
+INSTRUCTION_BG_COLOR = (129, 112, 243)  # F37081 in BGR format
+COUNTDOWN_COLOR = (129, 112, 243)  
 
 # Add with other state variables
 initial_instruction_shown = False
@@ -90,6 +91,45 @@ circle_hold_start = {}  # Track when finger started touching each circle
 
 # Add at top with other constants
 GAMEPLAY_INSTRUCTION = "Hold to select correct bubble"
+
+# Function to draw rounded rectangle
+def draw_rounded_rectangle(img, x, y, w, h, radius, color, thickness=-1):
+    # Draw the main rectangle
+    img = cv2.rectangle(img, (x + radius, y), (x + w - radius, y + h), color, thickness)
+    img = cv2.rectangle(img, (x, y + radius), (x + w, y + h - radius), color, thickness)
+    
+    # Draw the corner circles
+    img = cv2.circle(img, (x + radius, y + radius), radius, color, thickness)
+    img = cv2.circle(img, (x + w - radius, y + radius), radius, color, thickness)
+    img = cv2.circle(img, (x + radius, y + h - radius), radius, color, thickness)
+    img = cv2.circle(img, (x + w - radius, y + h - radius), radius, color, thickness)
+    return img
+
+# Function to draw stick figure
+def draw_stick_figure(img, center_x, center_y, size=100, color=(255, 255, 255), thickness=3):
+    # Head
+    head_radius = size // 8
+    cv2.circle(img, (center_x, center_y - size//2 + head_radius), head_radius, color, thickness)
+    
+    # Body
+    body_top = center_y - size//2 + head_radius*2
+    body_bottom = body_top + size//2
+    cv2.line(img, (center_x, body_top), (center_x, body_bottom), color, thickness)
+    
+    # Arms (horizontal line for T-pose)
+    arm_y = body_top + size//6
+    arm_length = size//1.5
+    cv2.line(img, 
+             (int(center_x - arm_length/2), arm_y), 
+             (int(center_x + arm_length/2), arm_y), 
+             color, thickness)
+    
+    # Legs
+    leg_length = size//3
+    cv2.line(img, (center_x, body_bottom), 
+             (center_x - leg_length//2, body_bottom + leg_length), color, thickness)
+    cv2.line(img, (center_x, body_bottom), 
+             (center_x + leg_length//2, body_bottom + leg_length), color, thickness)
 
 # Initialize MediaPipe Hands
 with mp_hands.Hands(
@@ -122,34 +162,111 @@ with mp_hands.Hands(
             
             font = cv2.FONT_HERSHEY_SIMPLEX
             instruction_scale = 1.2
-            countdown_scale = 4
+            countdown_scale = 1.5
             thickness = 2
             
-            # Calculate text size and position for instruction
-            text_size = cv2.getTextSize(INITIAL_INSTRUCTION, font, instruction_scale, thickness)[0]
-            text_x = (frame.shape[1] - text_size[0]) // 2  # Center horizontally
-            text_y = frame.shape[0] // 2 - 100  # Increased space above countdown (changed from -50 to -100)
+            # Split instructions into two lines
+            instructions = INITIAL_INSTRUCTION.split('\n')
             
-            # Add background rectangle with padding for instruction
-            padding = 30  # Increased padding from 20 to 30
-            cv2.rectangle(frame, 
-                         (text_x - padding, text_y - text_size[1] - padding),
-                         (text_x + text_size[0] + padding, text_y + padding),
-                         INSTRUCTION_BG_COLOR, 
-                         -1)  # Filled rectangle
+            # Calculate text sizes
+            text_sizes = [cv2.getTextSize(instr, font, instruction_scale, thickness)[0] for instr in instructions]
+            max_width = max(size[0] for size in text_sizes)
             
-            # Add instruction text
-            cv2.putText(frame, INITIAL_INSTRUCTION, 
-                       (text_x, text_y), 
-                       font, instruction_scale, (255, 255, 255), thickness)
+            # Calculate available height using screen_margin
+            available_height = frame.shape[0] - (2 * screen_margin)  # Total height minus top and bottom margins
             
-            # Draw countdown number with more space below instruction
-            countdown_text = f"{countdown}"
-            (count_width, _), _ = cv2.getTextSize(countdown_text, font, countdown_scale, 6)
-            count_x = (frame.shape[1] - count_width) // 2
+            # Calculate positions for both lines
+            padding_x = 40
+            padding_y = 35
+            rect_height = 70
+            spacing = 40  # Space between instruction rectangles
+            
+            # Calculate heights of all elements
+            instructions_height = (rect_height * 2) + spacing  # Two instruction boxes + spacing
+            countdown_height = 100  # Height for countdown number
+            figure_size = 100  # Stick figure size
+            
+            # Calculate total content height
+            total_content_height = instructions_height + countdown_height + figure_size
+            
+            # Calculate spacing between major elements
+            element_spacing = (available_height - total_content_height) // 3
+            
+            # Calculate starting Y position for instructions (using screen_margin)
+            start_y = screen_margin + element_spacing
+            
+            # Draw instructions
+            for i, (instruction, text_size) in enumerate(zip(instructions, text_sizes)):
+                rect_width = text_size[0] + (padding_x * 2)
+                rect_x = (frame.shape[1] - rect_width) // 2
+                rect_y = start_y + (i * (rect_height + spacing))
+                
+                # Draw rounded rectangle background
+                draw_rounded_rectangle(frame, 
+                                    rect_x, rect_y,
+                                    rect_width, rect_height,
+                                    15,
+                                    INSTRUCTION_BG_COLOR,
+                                    -1)
+                
+                # Calculate text position
+                text_x = rect_x + padding_x
+                text_height = text_size[1]
+                text_y = rect_y + (rect_height + text_height) // 2
+                
+                # Draw text
+                cv2.putText(frame, instruction,
+                           (text_x, text_y),
+                           font, instruction_scale,
+                           (255, 255, 255),
+                           thickness)
+            
+            # Calculate positions for countdown and stick figure
+            countdown_y = start_y + instructions_height + element_spacing + countdown_height//2
+            figure_y = countdown_y + countdown_height//2 + element_spacing
+            
+            # Draw countdown number with larger size and shadow effect
+            countdown_text = str(countdown)
+            countdown_scale = 1.5  # Keep the same scale
+            
+            # Calculate progress for the circle (from 0 to 1)
+            progress = countdown / INITIAL_WAIT_TIME
+            
+            # Calculate center position for the countdown
+            center_x = frame.shape[1] // 2
+            circle_radius = 45  # Keep the circle size the same
+            
+            # Draw outer circle (background)
+            cv2.circle(frame, (center_x, countdown_y), circle_radius, (200, 200, 200), 3)
+            
+            # Draw progress arc using the same pink color as text background
+            if progress > 0:
+                end_angle = 360 * progress
+                cv2.ellipse(frame, 
+                          (center_x, countdown_y), 
+                          (circle_radius, circle_radius),
+                          -90,  # Start from top
+                          0, end_angle,
+                          INSTRUCTION_BG_COLOR,  # Use same pink color as text background
+                          3)
+            
+            # Calculate exact text position for perfect centering
+            (text_width, text_height), baseline = cv2.getTextSize(countdown_text, cv2.FONT_HERSHEY_SIMPLEX, countdown_scale, 3)
+            text_x = center_x - text_width // 2
+            # Adjust Y position to center vertically within the circle
+            text_y = countdown_y + (text_height - baseline) // 3
+            
+            # Draw the number with increased thickness
             cv2.putText(frame, countdown_text,
-                       (count_x, frame.shape[0] // 2 + 100),  # Increased space below (changed from +50 to +100)
-                       font, countdown_scale, (0, 255, 255), 6)
+                       (text_x, text_y),
+                       cv2.FONT_HERSHEY_SIMPLEX,
+                       countdown_scale,
+                       COUNTDOWN_COLOR,  # Changed from (0, 0, 0) to COUNTDOWN_COLOR
+                       3)  # Increased thickness from 2 to 3
+            
+            # Draw stick figure
+            figure_x = frame.shape[1] // 2
+            draw_stick_figure(frame, figure_x, figure_y, figure_size)
             
             if countdown == 0:
                 initial_instruction_shown = True
@@ -204,7 +321,7 @@ with mp_hands.Hands(
 
             # circles after countdown ends and already not placed and valid wingspan
             if game_started and not recorded and wingspan > 0:  # Changed condition from countdown == 1
-                radius = min(wingspan / 2, frame.shape[1] / 3)  # Limit radius to 1/3 of screen width
+                radius = min(wingspan / 2, frame.shape[1] * 0.4)  # Increased from /3 to *0.4 (2/5 of screen width)
                 
                 # Calculate center point
                 center_x = frame.shape[1] // 2  # Use screen center instead of hand midpoint
@@ -252,7 +369,7 @@ with mp_hands.Hands(
 
                         # Draw the number in white
                         text = str(circle["number"])
-                        text_scale = 2
+                        text_scale = 1.5
                         text_thickness = 4
                         text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, text_scale, text_thickness)[0]
                         text_x = circle["x"] - text_size[0] // 2
