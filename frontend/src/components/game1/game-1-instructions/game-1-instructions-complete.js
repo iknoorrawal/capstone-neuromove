@@ -2,11 +2,11 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./game-1-instructions-complete.css";
 
-const Game1InstructionsComplete = ({ onBack, onPlay, onRestart, uid }) => {
+const Game1InstructionsComplete = ({ onBack, onPlay, onRestart, uid, level }) => {
   const navigate = useNavigate();
 
   const handlePlay = () => {
-    navigate(`/balance-quest/${uid}/game/level/1`);
+    navigate(`/balance-quest/${uid}/game/level/${level}`);
   };
   
 
