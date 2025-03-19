@@ -291,7 +291,7 @@ const BalanceQuestLevelsPage = ({ user }) => {
                     <Button
                         variant="contained"
                         disabled={!selectedLevel}
-                        onClick={() => navigate(`/balance-quest/${user.uid}/game/level/${selectedLevel}`)}
+                        onClick={() => navigate(`/balance-quest/:uid/instructions`)}
                         sx={{
                             width: '100%',
                             py: 2,
