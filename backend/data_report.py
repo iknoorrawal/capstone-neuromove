@@ -33,7 +33,9 @@ def create_game1_graph(game1_details):
     plt.figure(figsize=(10, 6))
     
     # Process Game 1 data
-    game_data = []
+    daily_data = {}
+    individual_points = []
+    
     for game in game1_details:
         timestamp = game.get("timestamp")
         if timestamp:
@@ -44,17 +46,36 @@ def create_game1_graph(game1_details):
                 performance = (correct/total * 100)
                 # Convert timestamp to local time
                 local_time = timestamp.astimezone(pytz.timezone('America/New_York'))
-                game_data.append((local_time, performance))
-                print(f"Game 1 data point: Date={local_time.strftime('%Y-%m-%d %H:%M:%S %Z')}, Performance={performance:.1f}%")
+                date_key = local_time.date()
+                
+                # Store individual points for scatter plot
+                individual_points.append((local_time, performance))
+                
+                # Aggregate daily data
+                if date_key not in daily_data:
+                    daily_data[date_key] = []
+                daily_data[date_key].append(performance)
     
-    # Sort data by date
-    game_data.sort(key=lambda x: x[0])
-    dates = [item[0] for item in game_data]
-    performances = [item[1] for item in game_data]
+    # Calculate daily averages
+    daily_averages = [(datetime.combine(date, datetime.min.time()).replace(tzinfo=pytz.timezone('America/New_York')), 
+                       sum(performances)/len(performances)) 
+                      for date, performances in daily_data.items()]
     
-    # Plot the data
-    if performances:
-        plt.plot(dates, performances, 'b.-', markersize=10)
+    # Sort both datasets
+    daily_averages.sort(key=lambda x: x[0])
+    individual_points.sort(key=lambda x: x[0])
+    
+    # Plot individual points
+    if individual_points:
+        ind_dates = [point[0] for point in individual_points]
+        ind_performances = [point[1] for point in individual_points]
+        plt.scatter(ind_dates, ind_performances, color='lightblue', alpha=0.5, s=50)
+    
+    # Plot daily averages line
+    if daily_averages:
+        avg_dates = [point[0] for point in daily_averages]
+        avg_performances = [point[1] for point in daily_averages]
+        plt.plot(avg_dates, avg_performances, 'b-', linewidth=2, label='Daily Average')
     
     plt.gcf().autofmt_xdate()  # Rotate and align the tick labels
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
@@ -63,6 +84,7 @@ def create_game1_graph(game1_details):
     plt.xlabel('Date')
     plt.ylabel('Performance (%)')
     plt.grid(True)
+    plt.legend()
     
     # Save plot to memory
     img_data = io.BytesIO()
@@ -76,7 +98,9 @@ def create_game3_graph(game3_details):
     plt.figure(figsize=(10, 6))
     
     # Process Game 3 data
-    game_data = []
+    daily_data = {}
+    individual_points = []
+    
     for game in game3_details:
         timestamp = game.get("timestamp")
         if timestamp:
@@ -87,17 +111,36 @@ def create_game3_graph(game3_details):
                 performance = (correct/total * 100)
                 # Convert timestamp to local time
                 local_time = timestamp.astimezone(pytz.timezone('America/New_York'))
-                game_data.append((local_time, performance))
-                print(f"Game 3 data point: Date={local_time.strftime('%Y-%m-%d %H:%M:%S %Z')}, Performance={performance:.1f}%")
+                date_key = local_time.date()
+                
+                # Store individual points for scatter plot
+                individual_points.append((local_time, performance))
+                
+                # Aggregate daily data
+                if date_key not in daily_data:
+                    daily_data[date_key] = []
+                daily_data[date_key].append(performance)
     
-    # Sort data by date
-    game_data.sort(key=lambda x: x[0])
-    dates = [item[0] for item in game_data]
-    performances = [item[1] for item in game_data]
+    # Calculate daily averages
+    daily_averages = [(datetime.combine(date, datetime.min.time()).replace(tzinfo=pytz.timezone('America/New_York')), 
+                       sum(performances)/len(performances)) 
+                      for date, performances in daily_data.items()]
     
-    # Plot the data
-    if performances:
-        plt.plot(dates, performances, 'r.-', markersize=10)
+    # Sort both datasets
+    daily_averages.sort(key=lambda x: x[0])
+    individual_points.sort(key=lambda x: x[0])
+    
+    # Plot individual points
+    if individual_points:
+        ind_dates = [point[0] for point in individual_points]
+        ind_performances = [point[1] for point in individual_points]
+        plt.scatter(ind_dates, ind_performances, color='pink', alpha=0.5, s=50)
+    
+    # Plot daily averages line
+    if daily_averages:
+        avg_dates = [point[0] for point in daily_averages]
+        avg_performances = [point[1] for point in daily_averages]
+        plt.plot(avg_dates, avg_performances, 'r-', linewidth=2, label='Daily Average')
     
     plt.gcf().autofmt_xdate()  # Rotate and align the tick labels
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
@@ -106,6 +149,7 @@ def create_game3_graph(game3_details):
     plt.xlabel('Date')
     plt.ylabel('Performance (%)')
     plt.grid(True)
+    plt.legend()
     
     # Save plot to memory
     img_data = io.BytesIO()
