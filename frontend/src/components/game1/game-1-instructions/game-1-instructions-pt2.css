@@ -1,0 +1,80 @@
+/* Fix Bins Position */
+.bins-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    width: 75%;
+    height: 250px; /* Fixed height to maintain position */
+    position: absolute;
+    bottom: 0; /* Ensures bins are anchored to the bottom */
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.bin-wrapper {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+}
+
+/* Fix Bin Images */
+.green-bin, .garbage-bin {
+    width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* Fix Arrows Position */
+/* Arrows */
+.arrows-container {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: space-between;
+    width: 40%;
+}
+
+.left-arrow,
+.right-arrow {
+    width: 200px; /* Increase size */
+    height: auto;
+    z-index: -2;
+}
+
+
+.right-arrow {
+    right: -140px; /* Move right arrow closer */
+}
+
+
+/* Timer Styling */
+.item-timer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative; /* Change to relative */
+    top: 40%; /* Move timer lower */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+}
+
+.timed-item {
+    width: 140px; /* Adjust size as needed */
+    height: auto;
+}
+
+@keyframes moveToCorrectBin {
+  0% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-200px, 150px) scale(0.8);
+  }
+  100% {
+    transform: translate(-200px, 300px) scale(0.6);
+  }
+}

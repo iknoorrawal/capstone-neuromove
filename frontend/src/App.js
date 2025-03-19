@@ -11,6 +11,7 @@ import ReachAndRecallLevelsPage from "./components/game3/home_page";
 import ReachAndRecallMemorize from "./components/game3/memorize_numbers";
 import BalanceQuest from "./components/game1/game_logic";
 import FinalScore from './components/game3/final_score';
+import Game1Instructions from "./components/game1/game-1-instructions/game-1-instructions";
 import Game3Instructions from "./components/game3/game-3-instructions/Game3Instructions";
 import BalanceQuestLevelsPage from "./components/game1/home_page";
 import Settings from './components/settings';
@@ -52,6 +53,7 @@ const App = () => {
         <Route path="/reach-and-recall/:uid/instructions/level/:level" element={<Game3Instructions user={user} />} />
         <Route path="/balance-quest/:uid/home-page" element={<BalanceQuestLevelsPage user={user} />} />
         <Route path="/balance-quest/:uid/game/level/:level" element={<BalanceQuest user={user} />} />
+        <Route path="/balance-quest/:uid/instructions/level/1" element={<Game1Instructions />} />
       </Routes>
     </Router>   
   );

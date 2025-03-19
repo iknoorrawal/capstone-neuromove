@@ -1,0 +1,31 @@
+.correct-bin {
+    width: 25vw; /* Width of the bin (2x the original) */
+    height: 25vh; /* Height of the bin (3x the original) */
+    background: linear-gradient(150deg, #85C249 3.11%, #61952E 57.73%, #4D8614 119.93%), #D9D9D9;    color: white; /* Text color */
+    font-size: 36px; /* Increase font size for better visibility */
+    font-weight: bold; /* Make the text bold */
+    display: flex; /* Flexbox for centering content */
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Optional shadow for depth */
+    position: fixed; /* Fix position to the bottom */
+    bottom: 0px; /* Distance from the bottom */
+    z-index: 10; /* Ensure it appears above other elements */
+    color: white;
+}
+
+.incorrect-bin {
+    width: 25vw; /* Width of the bin (2x the original) */
+    height: 25vh; /* Height of the bin (3x the original) */
+    background: linear-gradient(191deg, #BB5C3F 45.54%, #BD3004 121.68%), #D9D9D9;    
+    font-size: 36px; /* Increase font size for better visibility */
+    font-weight: bold; /* Make the text bold */
+    display: flex; /* Flexbox for centering content */
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Optional shadow for depth */
+    position: fixed; /* Fix position to the bottom */
+    bottom: 0px; /* Distance from the bottom */
+    z-index: 10; /* Ensure it appears above other elements */
+    color: white;
+}
