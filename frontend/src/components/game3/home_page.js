@@ -94,6 +94,14 @@ const ReachAndRecallLevelsPage = ({ user }) => {
         }
     };
 
+    const handleVideoPlay = (event) => {
+        setIsPlaying(true);
+    };
+
+    const handleVideoPause = (event) => {
+        setIsPlaying(false);
+    };
+
     if (!user || loading) {
         return (
             <Box sx={{
@@ -227,59 +235,70 @@ const ReachAndRecallLevelsPage = ({ user }) => {
                             height: 350,
                             borderRadius: 4,
                             overflow: 'hidden',
-                            mb: 3,
                             position: 'relative',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            bgcolor: '#000'  // Black background for video
+                            mb: 3,
                         }}
                     >
-                        <video
+                        <video 
                             ref={videoRef}
-                            loop
-                            muted
-                            playsInline
-                            onEnded={() => setIsPlaying(false)}
-                            onPause={() => setIsPlaying(false)}
-                            onPlay={() => setIsPlaying(true)}
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'contain',
-                                borderRadius: '16px',
-                                backgroundColor: '#000'
+                            width="100%" 
+                            height="100%" 
+                            controls
+                            style={{ 
+                                objectFit: 'cover',
+                                filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.2))',
+                                WebkitFilter: 'drop-shadow(0 0 2px rgba(0,0,0,0.2))'
                             }}
+                            poster="/videos/game3-thumbnail.jpg"
+                            onPlay={handleVideoPlay}
+                            onPause={handleVideoPause}
+                            onEnded={() => setIsPlaying(false)}
                         >
-                            <source src="/videos/demo.mp4" type="video/mp4" />
+                            <source src="/videos/demo-2.mp4" type="video/mp4" />
                             Your browser does not support the video tag.
                         </video>
-                        {!isPlaying && (
-                            <Box
-                                onClick={handlePlayPause}
+                        
+                        {/* Custom Thumbnail Overlay (shows before video plays) */}
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                bgcolor: '#EC6588',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                opacity: 1,
+                                transition: 'opacity 0.3s',
+                                '&.hidden': {
+                                    opacity: 0,
+                                    pointerEvents: 'none',
+                                },
+                                cursor: 'pointer'
+                            }}
+                            className={isPlaying ? 'hidden' : ''}
+                            onClick={handlePlayPause}
+                        >
+                            <PlayArrowIcon sx={{ 
+                                fontSize: 60, 
+                                color: 'white',
+                                mb: 2
+                            }} />
+                            <Typography
+                                variant="h4"
                                 sx={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: '50%',
-                                    transform: 'translate(-50%, -50%)',
-                                    width: 80,
-                                    height: 80,
-                                    borderRadius: '50%',
-                                    bgcolor: 'rgba(255, 255, 255, 0.8)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    '&:hover': {
-                                        bgcolor: 'rgba(255, 255, 255, 0.9)',
-                                        transform: 'translate(-50%, -50%) scale(1.1)',
-                                    }
+                                    color: 'white',
+                                    fontWeight: 500,
+                                    textTransform: 'capitalize',
+                                    letterSpacing: 1,
                                 }}
                             >
-                                <PlayArrowIcon sx={{ fontSize: 40, color: '#C1436D' }} />
-                            </Box>
-                        )}
+                                Demo Video
+                            </Typography>
+                        </Box>
                     </Box>
 
                     {/* Level Selection */}
