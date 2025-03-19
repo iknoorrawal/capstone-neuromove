@@ -10,7 +10,7 @@ import {
 import { db } from "../../firebase";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import updateStreakAndActivity from "../updateStreakAndActivity";
-
+ 
 
 function getStarsAndPoints(score, total) {
   if (total === 0) return { stars: 0, points: 0 };

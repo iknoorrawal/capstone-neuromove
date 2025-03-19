@@ -5,7 +5,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { calculateScore } from './game_config';
 import updateStreakAndActivity from "../updateStreakAndActivity";
-
+ 
 
 function getStarsAndPoints(incorrect, level) {
     const score = calculateScore(incorrect, level);

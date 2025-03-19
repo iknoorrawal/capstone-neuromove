@@ -29,7 +29,7 @@ import EmojiFlagsIcon from '@mui/icons-material/EmojiFlags';
 import TerrainIcon from '@mui/icons-material/Terrain';
 import RouteIcon from '@mui/icons-material/Route';
 import { updateStreakAndActivity } from "./updateStreakAndActivity";
-
+ 
 // Define rank thresholds and information
 const RANKS = [
   { name: "Wanderer", threshold: 0, icon: ExploreIcon, color: "#8D6E63" },
