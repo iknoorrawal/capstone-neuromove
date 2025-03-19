@@ -4,7 +4,7 @@ import { Box, Typography, Button, CircularProgress, Container, Paper } from '@mu
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { calculateScore } from './game_config';
-import updateStreakAndActivity from "../updateStreakAndActivity";
+import { updateStreakAndActivity } from '../updateStreakAndActivity.js';
  
 
 function getStarsAndPoints(incorrect, level) {

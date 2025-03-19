@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { db } from "../../firebase";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
-import updateStreakAndActivity from "../updateStreakAndActivity";
+import { updateStreakAndActivity } from '../updateStreakAndActivity.js';
  
 
 function getStarsAndPoints(score, total) {

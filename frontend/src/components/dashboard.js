@@ -28,7 +28,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import EmojiFlagsIcon from '@mui/icons-material/EmojiFlags';
 import TerrainIcon from '@mui/icons-material/Terrain';
 import RouteIcon from '@mui/icons-material/Route';
-import { updateStreakAndActivity } from "./updateStreakAndActivity";
+import { updateStreakAndActivity } from "./updateStreakAndActivity.js";
  
 // Define rank thresholds and information
 const RANKS = [
@@ -100,6 +100,7 @@ const Dashboard = () => {
 
         if (userSnap.exists()) {
           const userData = userSnap.data();
+          setUserData(userData);
 
           // Set the streak and weekly login data
           setWeeklyLogins(userData.weeklyLogins || {});
@@ -220,7 +221,6 @@ const Dashboard = () => {
     );
   }
 
-  const firstName = userData?.firstName || "User";
   const weekDays = generateWeekDays();
   
   // Calculate points needed for next rank
@@ -406,7 +406,7 @@ const Dashboard = () => {
                 color: '#333'
               }}
             >
-              {firstName}!
+              {userData?.firstName}!
             </Typography>
             
             {/* Display current rank under name */}
