@@ -7,8 +7,16 @@ from BalanceQuest.constants import Faces, Flags, Foods, Fruits, Animals, HandSym
 from config import get_level_config
 import os
 from data_report import generate_report_for_user
+from fastapi.staticfiles import StaticFiles
+
 
 app = FastAPI()
+
+# Define path to your sounds directory
+sounds_dir = os.path.join(os.path.dirname(__file__), "sounds")
+
+# Serve static files from the sounds directory
+app.mount("/sounds", StaticFiles(directory=sounds_dir), name="sounds")
 
 # Allowed origins
 origins = [

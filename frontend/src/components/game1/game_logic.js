@@ -18,6 +18,38 @@ import {
 
 import FinalScore from "./final_score";
 
+function createSoundPool(url, poolSize = 3) {
+  const sounds = Array(poolSize).fill().map(() => new Audio(url));
+  let index = 0;
+  
+  return {
+    preload: function() {
+      // Preload all sounds in the pool
+      sounds.forEach(sound => {
+        sound.load();
+        // Some browsers require interaction before playing
+        // This trick helps with initial loading
+        sound.volume = 0;
+        sound.play().then(() => {
+          sound.pause();
+          sound.currentTime = 0;
+          sound.volume = 1;
+        }).catch(err => console.log("Preload attempted, will work after user interaction"));
+      });
+    },
+    play: function() {
+      const sound = sounds[index];
+      sound.currentTime = 0;
+      sound.play().catch(err => console.error("Error playing sound:", err));
+      index = (index + 1) % poolSize;
+    }
+  };
+}
+
+// Create sound pools at the component level (outside any useEffect)
+const correctSoundPool = createSoundPool("http://localhost:8000/sounds/correct.mp3");
+const incorrectSoundPool = createSoundPool("http://localhost:8000/sounds/incorrect.mp3");
+
 const LEVEL_CONFIG = {
   1: {
     items: 10,
@@ -37,6 +69,8 @@ const LEVEL_CONFIG = {
 };
 
 function BalanceQuest() {
+
+
   const { uid, level: levelParam } = useParams();
   const level = parseInt(levelParam) || 1;
   const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
@@ -58,6 +92,12 @@ function BalanceQuest() {
   const [openConfirm, setOpenConfirm] = useState(false);
 
 
+  useEffect(() => {
+    // Preload audio files
+    correctSoundPool.preload();
+    incorrectSoundPool.preload();
+  }, []);
+  
   useEffect(() => {
     const fetchGameData = async () => {
       try {
@@ -125,9 +165,15 @@ function BalanceQuest() {
 
     const currentEmoji = gameData.guessEmojis[guessIndex];
     const correctAnswer = currentEmoji.inGroup;
-    if (userSaysInCategory === correctAnswer) {
+    const isCorrect = userSaysInCategory === correctAnswer;
+    
+    if (isCorrect) {
+      correctSoundPool.play();  // Using the pool instead of a single Audio object
       setScore((prev) => prev + 1);
+    } else {
+      incorrectSoundPool.play();  // Using the pool instead of a single Audio object
     }
+    
     goToNextGuess();
   };
   

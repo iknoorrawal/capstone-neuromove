@@ -6,6 +6,26 @@ import random
 import math
 import numpy as np
 from config import calculate_score  # Remove the dot
+import pygame  # Add pygame for sound handling
+import os  # Add os for path handling
+
+# Initialize pygame mixer for sound playback
+pygame.mixer.init()
+
+# Load sound files - assuming they are in frontend/public/sounds directory
+# Use os.path.join for cross-platform compatibility
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sound_path = os.path.join(script_dir, "sounds")
+
+try:
+    correct_sound = pygame.mixer.Sound(os.path.join(sound_path, "correct.mp3"))
+    incorrect_sound = pygame.mixer.Sound(os.path.join(sound_path, "incorrect.mp3"))
+    print("Sound files loaded successfully")
+except Exception as e:
+    print(f"Failed to load sound files: {e}")
+    # Fallback to None so we can check if sounds are available
+    correct_sound = None
+    incorrect_sound = None
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser()
@@ -454,12 +474,21 @@ with mp_hands.Hands(
                                         circle["message"] = "Correct!"
                                         circle["message_bg"] = correct_bg
                                         circle["visible"] = False
+                                        
+                                        # Play correct sound
+                                        if correct_sound:
+                                            correct_sound.play()
+                                            
                                     elif (circle["number"] not in found_numbers and 
                                           (circle_id not in touched_circles or 
                                            current_time - touched_circles.get(circle_id, 0) > touch_cooldown)):
                                         incorrect_count += 1
                                         touched_circles[circle_id] = current_time
                                         circle["try_again_timestamp"] = current_time
+                                        
+                                        # Play incorrect sound
+                                        if incorrect_sound:
+                                            incorrect_sound.play()
                                     
                                     # Reset hold timer after processing
                                     circle_hold_start.pop(circle_id, None)
@@ -541,6 +570,9 @@ with mp_hands.Hands(
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+
+# Clean up pygame resources before exiting
+pygame.mixer.quit()
 
 cap.release()
 cv2.destroyAllWindows()
