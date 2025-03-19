@@ -1,0 +1,454 @@
+/* Base container styles */
+.instructions-container {
+  text-align: center;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start !important;
+  height: 100vh;
+  padding: 0 !important;
+  margin: 0;
+  overflow: hidden; /* Prevents scrolling */
+}
+
+/* Updated Exit Game button styling */
+.instructions-container .exit-button,
+.exit-button {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background-color: #B45522; /* Brown/orange background */
+  border: none;
+  border-radius: 5px;
+  color: white !important; /* Force white text with !important */
+  font-family: Inter, sans-serif;
+  font-size: 22px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 120%;
+  letter-spacing: -0.256px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  padding: 10px 20px;
+  z-index: 10;
+}
+
+/* Also update any hover states */
+.instructions-container .exit-button:hover,
+.exit-button:hover {
+  transform: scale(1.1);
+  background-color: #9e4b1f; /* Slightly darker brown/orange on hover */
+  border: none;
+  color: white !important; /* Keep text white on hover */
+}
+
+/* Additional selector to target the exit button specifically in timer sections */
+.timer-container .exit-button,
+.instructions-timer .exit-button,
+[class*="timer"] .exit-button {
+  color: white !important; /* Ensuring white text in timer sections */
+}
+
+/* Text elements */
+.game-title {
+  font-size: 25px;
+  font-weight: bold;
+  margin-top: 10px;
+  color: #B45522;
+}
+
+.instruction-subtext {
+  font-size: 40px;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 5px;
+  color: #B45522;
+}
+
+/* ============ PART 1: FRUITS ANIMATION ============ */
+.fruits-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: 5vh;
+  margin-top: 15vh;
+  position: relative;
+  height: 40vh;
+  width: 100%;
+}
+
+.fruit-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.fruit {
+  width: 15vw;
+  max-width: 200px;
+  height: auto;
+  position: absolute;
+}
+
+/* First fruit - starts in center */
+.fruit-0 {
+  left: 20%;
+  animation: move-right-then-fall 3s ease-in forwards 3s;
+}
+
+/* Second fruit - starts on left, moves to center, then falls */
+.fruit-1 {
+  left: 50%;
+  transform: translateX(-50%);
+  animation: fall-straight 3s ease-in forwards;
+}
+
+/* Third fruit - starts on right, moves to center, then falls */
+.fruit-2 {
+  right: 20%;
+  transform: translateX(0);
+  animation: move-center-then-fall 3s ease-in forwards 6s;
+}
+
+/* Scalable animation for center fruit */
+@keyframes fall-straight {
+  0% { transform: translateX(-50%) translateY(0); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(30vh); opacity: 0; }
+}
+
+/* Scalable animation for banana (left fruit) */
+@keyframes move-right-then-fall {
+  0% { transform: translateX(0) translateY(0); opacity: 1; }
+  50% { transform: translateX(30vw) translateY(0); opacity:1; }
+  100% { transform: translateX(30vw) translateY(30vh); opacity: 0; }
+}
+
+/* Scalable animation for watermelon (right fruit) */
+@keyframes move-center-then-fall {
+  0% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateX(-30vw) translateY(0); opacity:1;}
+  100% { transform: translateX(-30vw) translateY(30vh); opacity: 0; }
+}
+
+.correct-bin {
+    width: 25vw; /* Width of the bin (2x the original) */
+    height: 25vh; /* Height of the bin (3x the original) */
+    background: linear-gradient(150deg, #85C249 3.11%, #61952E 57.73%, #4D8614 119.93%), #D9D9D9;    color: white; /* Text color */
+    font-size: 36px; /* Increase font size for better visibility */
+    font-weight: bold; /* Make the text bold */
+    display: flex; /* Flexbox for centering content */
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Optional shadow for depth */
+    position: fixed; /* Fix position to the bottom */
+    bottom: 0px; /* Distance from the bottom */
+    z-index: 10; /* Ensure it appears above other elements */
+    color: white;
+}
+
+.incorrect-bin {
+    width: 25vw; /* Width of the bin (2x the original) */
+    height: 25vh; /* Height of the bin (3x the original) */
+    background: linear-gradient(191deg, #BB5C3F 45.54%, #BD3004 121.68%), #D9D9D9;    
+    font-size: 36px; /* Increase font size for better visibility */
+    font-weight: bold; /* Make the text bold */
+    display: flex; /* Flexbox for centering content */
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Optional shadow for depth */
+    position: fixed; /* Fix position to the bottom */
+    bottom: 0px; /* Distance from the bottom */
+    z-index: 10; /* Ensure it appears above other elements */
+    color: white;
+}
+
+/* Arrows */
+.arrows-container {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: space-between;
+  width: 40%;
+}
+
+.left-arrow,
+.right-arrow {
+  width: 200px; /* Increase size */
+  height: auto;
+  z-index: -2;
+}
+
+.right-arrow {
+  right: -140px; /* Move right arrow closer */
+}
+
+/* Timer Styling */
+.item-timer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 40%; /* Move timer lower */
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.timed-item {
+  width: 140px; /* Adjust size as needed */
+  height: auto;
+}
+
+/* Instructions visuals container */
+.instructions-visuals {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============ PART 3: COMPLETE SCREEN ============ */
+.instructions-complete-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.instructions-complete-text {
+  font-size: 36px;
+  text-align: center;
+  margin-bottom: 60px;
+  color: #B45522;
+}
+
+.instructions-buttons {
+  display: flex;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+/* Updated styling for the repeat button */
+.repeat-button {
+  border-radius: 40px;
+  border: 2px solid #B45522;
+  color: #B45522;
+  text-align: center;
+  font-family: Inter, sans-serif;
+  font-size: 35.588px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%; /* 42.706px */
+  background-color: transparent;
+  padding: 15px 30px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.repeat-button:hover {
+  background-color: rgba(180, 85, 34, 0.1); /* Light hover effect */
+}
+
+/* Maintain the existing button container styles */
+.instructions-buttons {
+  display: flex;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+/* You may want to adjust the play button to match the overall style */
+.play-button {
+  border-radius: 40px;
+  background-color: #B45522;
+  color: white;
+  text-align: center;
+  font-family: Inter, sans-serif;
+  font-size: 35.588px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%; /* 42.706px */
+  border: 2px solid #B45522;
+  padding: 15px 30px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.play-button:hover {
+  background-color: #9e4b1f; /* Slightly darker on hover */
+}
+
+/* Media queries for responsiveness */
+@media (max-width: 768px) {
+  .game-title {
+    font-size: 22px;
+  }
+  
+  .instruction-subtext {
+    font-size: 32px;
+  }
+  
+  .fruit {
+    width: 150px;
+  }
+  
+  .correct-bin, .incorrect-bin {
+    width: 150px;
+    height: 80px;
+    font-size: 18px;
+  }
+  
+  .left-arrow, .right-arrow {
+    width: 150px;
+  }
+  
+  .instructions-complete-text {
+    font-size: 28px;
+  }
+  
+  .repeat-button, .play-button {
+    padding: 12px 24px;
+    font-size: 16px;
+  }
+}
+
+/* Continue overlay styles */
+.continue-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100; /* Ensure it's above other elements */
+  cursor: pointer;
+  /* Make the overlay transparent to clicks */
+  pointer-events: auto;
+}
+
+.continue-text {
+  position: absolute;
+  bottom: 40px; /* Position from bottom */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(180, 85, 34, 0.8); /* Semi-transparent background */
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  animation: pulse 1.5s infinite; /* Add pulsing animation */
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
+/* Pulse animation for continue text */
+@keyframes pulse {
+  0% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.05); }
+  100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+}
+
+/* Continue button with specified styling - text color #B45522 */
+.continue-button {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: none;
+  border: none;
+  /* Updated text color */
+  color: #B45522;
+  text-align: center;
+  font-family: Inter, sans-serif;
+  font-size: 22px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 120%; /* 26.4px */
+  letter-spacing: -0.256px;
+  /* Additional properties */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  padding: 10px 20px;
+  z-index: 10;
+}
+
+.continue-button:hover {
+  transform: translateX(-50%) scale(1.1); /* Slightly larger on hover */
+  background: none; /* Explicitly no background on hover */
+}
+
+/* Override any button defaults */
+.continue-button:focus, 
+.continue-button:active {
+  outline: none;
+  background: none;
+  border: none;
+}
+
+/* Highlighted bin effect with yellow hue */
+.highlighted-bin {
+  transform: translateX(-50%) scale(1.1) !important; /* Make the bin slightly larger */
+  box-shadow: 0 0 10px rgba(255, 255, 0, 0.8), /* Inner yellow glow */
+              0 0 20px rgba(255, 215, 0, 0.6), /* Middle gold glow */
+              0 0 30px rgba(255, 165, 0, 0.4); /* Outer orange glow */
+  z-index: 5; /* Ensure it's above other elements */
+  transition: all 0.3s ease; /* Smooth transition */
+  border: 3px solid #FFD700; /* Gold border */
+}
+
+/* Standing illustration styles */
+.standing-illustration {
+  position: absolute;
+  bottom: 20vh;
+  left: 30%; 
+  transform: translateX(-50%);
+  z-index: 5;
+}
+
+/* Right foot illustration - position on the right side */
+.standing-illustration-right {
+  left: 70%; /* Position on the right side instead of left */
+}
+
+.standing-image {
+  height: 25vh;
+  max-height: 250px;
+  width: auto;
+  max-width: 100%;
+}
+
+/* Adjust for different screen sizes */
+@media (max-width: 768px) {
+  .standing-image {
+    height: 20vh;
+  }
+  
+  .standing-illustration-right {
+    left: 75%; /* Adjust right position for smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .standing-illustration {
+    left: 25%; 
+  }
+  
+  .standing-illustration-right {
+    left: 75%; /* Adjust right position for very small screens */
+  }
+  
+  .standing-image {
+    height: 18vh;
+  }
+}
+  
