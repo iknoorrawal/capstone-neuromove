@@ -4,6 +4,10 @@ import "./game-1-instructions-complete.css";
 
 const Game1InstructionsComplete = ({ onBack, onPlay, onRestart, uid }) => {
   const navigate = useNavigate();
+
+  const handlePlay = () => {
+    navigate(`/balance-quest/${uid}/game/level/1`);
+  };
   
 
   const handleRepeat = () => {
@@ -41,7 +45,7 @@ const Game1InstructionsComplete = ({ onBack, onPlay, onRestart, uid }) => {
         <button className="repeat-button" onClick={onRestart}>
           Repeat Instructions
         </button>
-        <button className="play-button" onClick={onPlay}>
+        <button className="play-button" onClick={handlePlay}>
           Play Now
         </button>
       </div>
