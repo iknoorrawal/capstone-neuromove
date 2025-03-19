@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from game_logic import BalanceGame
 from constants import Faces, Flags, Foods, Fruits, Animals, HandSymbols, Nature, Sports, Clothing
 import random
+from .constants import CATEGORIES
 
 app = FastAPI()
 
@@ -46,11 +47,9 @@ async def get_game_data(level: int = Query(default=1, ge=1, le=3)):
     remaining_category_items = [item for item in selected_category if item not in initial_items]
     num_same_category = num_items // 2
     if remaining_category_items:
-        same_category_items = random.sample(remaining_category_items, 
-                                          min(num_same_category, len(remaining_category_items)))
         guess_pool.extend([
-            {"emoji": item[1], "inGroup": True}
-            for item in same_category_items
+            {"emoji": item, "inGroup": True}
+            for item in random.sample(remaining_category_items, min(num_same_category, len(remaining_category_items)))
         ])
     
     # Add items from other categories
@@ -60,26 +59,16 @@ async def get_game_data(level: int = Query(default=1, ge=1, le=3)):
         other_items.extend(cat)
     
     num_other_category = num_items - len(guess_pool)
-    if num_other_category > 0:  # Only add other category items if needed
-        other_category_items = random.sample(other_items, min(num_other_category, len(other_items)))
-        guess_pool.extend([
-            {"emoji": item[1], "inGroup": False}
-            for item in other_category_items
-        ])
+    guess_pool.extend([
+        {"emoji": item, "inGroup": False}
+        for item in random.sample(other_items, num_other_category)
+    ])
     
     # Shuffle the guess pool
     random.shuffle(guess_pool)
     
-    # Get the category name (first category where the first item matches)
-    category_name = next(name for name, items in [
-        ("Faces", Faces), ("Flags", Flags), ("Foods", Foods),
-        ("Fruits", Fruits), ("Animals", Animals), ("Hand Symbols", HandSymbols),
-        ("Nature", Nature), ("Sports", Sports), ("Clothing", Clothing)
-    ] if items == selected_category)
-    
     return {
-        "category": category_name,
-        "initialEmojis": [{"emoji": item[1]} for item in initial_items],
+        "initialEmojis": [{"emoji": item} for item in initial_items],
         "guessEmojis": guess_pool
     }
 
