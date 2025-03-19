@@ -5,7 +5,7 @@ import "./game-1-instructions-pt2.css";
 import Game1InstructionsComplete from "./game-1-instructions-complete"; //  Import final screen
 import "./bucket.css";
 
-const Game1InstructionsPart2 = ({ onComplete, onBack, onRestart }) => {
+const Game1InstructionsPart2 = ({ onComplete, onBack, onRestart, level }) => {
   const navigate = useNavigate();
   const { uid } = useParams();
   const [currentStep, setCurrentStep] = useState(0);
@@ -143,6 +143,7 @@ const Game1InstructionsPart2 = ({ onComplete, onBack, onRestart }) => {
       onComplete={onComplete}
       onRestart={onRestart}
       uid={uid}
+      level={level}
     />;
   }
 

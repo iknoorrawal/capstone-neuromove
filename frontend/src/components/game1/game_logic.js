@@ -13,7 +13,9 @@ import {
   Dialog,
   DialogActions,
   DialogTitle,
-  Typography
+  Typography,
+  Snackbar,
+  Alert
 } from "@mui/material";
 
 import FinalScore from "./final_score";
@@ -91,6 +93,8 @@ function BalanceQuest() {
   const [dataSaved, setDataSaved] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
 
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [isCorrectAnswer, setIsCorrectAnswer] = useState(false);
 
   useEffect(() => {
     // Preload audio files
@@ -167,11 +171,15 @@ function BalanceQuest() {
     const correctAnswer = currentEmoji.inGroup;
     const isCorrect = userSaysInCategory === correctAnswer;
     
+    // Set feedback states
+    setIsCorrectAnswer(isCorrect);
+    setShowFeedback(true);
+    
     if (isCorrect) {
-      correctSoundPool.play();  // Using the pool instead of a single Audio object
+      correctSoundPool.play();
       setScore((prev) => prev + 1);
     } else {
-      incorrectSoundPool.play();  // Using the pool instead of a single Audio object
+      incorrectSoundPool.play();
     }
     
     goToNextGuess();
@@ -212,6 +220,10 @@ function BalanceQuest() {
   const handleConfirmExit = () => {
     setOpenConfirm(false);
     navigate(`/balance-quest/${uid}/home-page`);
+  };
+
+  const handleFeedbackClose = () => {
+    setShowFeedback(false);
   };
 
   if (error) {
@@ -436,6 +448,30 @@ function BalanceQuest() {
           Score: {score} / {guessIndex} &nbsp;|&nbsp; Time left: {guessTimer}s
         </Typography>
       </Box>
+
+      <Snackbar
+        open={showFeedback}
+        autoHideDuration={1000}
+        onClose={handleFeedbackClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleFeedbackClose}
+          severity={isCorrectAnswer ? "success" : "error"}
+          sx={{
+            width: '100%',
+            fontSize: '1.2rem',
+            fontWeight: 'bold',
+            backgroundColor: isCorrectAnswer ? '#4CAF50' : '#f44336',
+            color: 'white',
+            '& .MuiAlert-icon': {
+              fontSize: '2rem'
+            }
+          }}
+        >
+          {isCorrectAnswer ? 'Correct!' : 'Incorrect'}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

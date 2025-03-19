@@ -13,7 +13,7 @@ const fruits = [
 
 const Game1Instructions = ({ onComplete, onBack }) => {
   const navigate = useNavigate();
-  const { uid } = useParams(); // Get user ID from URL parameters
+  const { uid, level } = useParams(); // Get both uid and level from URL params
   const [showPart2, setShowPart2] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
   const [currentFruitIndex, setCurrentFruitIndex] = useState(0);
@@ -66,12 +66,14 @@ const Game1Instructions = ({ onComplete, onBack }) => {
           onRepeat={handleRepeat}
           onPlay={onComplete}
           uid={uid}
+          level={level}
         />
       ) : showPart2 ? (
         <Game1InstructionsPart2
           onComplete={() => setShowComplete(true)}
           onBack={onBack}
           onRestart={handleRepeat}
+          level={level}
         />
       ) : (
         <div 
