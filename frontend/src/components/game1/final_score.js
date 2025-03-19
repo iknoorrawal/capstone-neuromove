@@ -9,6 +9,8 @@ import {
 } from "@mui/material";
 import { db } from "../../firebase";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
+import updateStreakAndActivity from "../updateStreakAndActivity";
+
 
 function getStarsAndPoints(score, total) {
   if (total === 0) return { stars: 0, points: 0 };
@@ -71,6 +73,10 @@ function FinalScore({ score, total, uid, gameId, level }) {
         await updateDoc(gameRef, {
           score: points,
         });
+
+        // Update streak and activity with the points earned
+        const streakResult = await updateStreakAndActivity(db, uid, points);
+        console.log('Streak update result:', streakResult);        
 
         // If perfect score, unlock next level
         if (score === total) {

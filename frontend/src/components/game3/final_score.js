@@ -4,6 +4,8 @@ import { Box, Typography, Button, CircularProgress, Container, Paper } from '@mu
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { calculateScore } from './game_config';
+import updateStreakAndActivity from "../updateStreakAndActivity";
+
 
 function getStarsAndPoints(incorrect, level) {
     const score = calculateScore(incorrect, level);
@@ -65,6 +67,17 @@ const FinalScore = ({ user }) => {
                     timestamp: serverTimestamp(),
                     numbers: location.state.numbers
                 });
+                
+                // Update streak and activity with the points earned from this game
+                const streakResult = await updateStreakAndActivity(db, user.uid, calculateScore(location.state.incorrect, location.state.level),);
+                console.log('Streak update result:', streakResult);
+
+                // Check if the user ranked up
+                if (streakResult.hasRankedUp) {
+                    console.log(`User ranked up to ${streakResult.newRankName}!`);
+                    // You could store this information to show a rank-up notification
+                }
+                
             } catch (error) {
                 console.error("Error storing score:", error);
             }
