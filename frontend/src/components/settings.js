@@ -661,18 +661,46 @@ const Settings = () => {
             <Button
               variant="text"
               onClick={async () => {
-                // Update last download date
-                const userRef = doc(db, "users", uid);
-                await updateDoc(userRef, {
-                  lastDataExport: new Date().toISOString()
-                });
-                
-                // TODO: Implement actual PDF generation and download
-                // For now, just update the timestamp
-                setUserData(prev => ({
-                  ...prev,
-                  lastDataExport: new Date().toISOString()
-                }));
+                try {
+                  // Show loading state if needed
+                  
+                  // Call the FastAPI endpoint
+                  const response = await fetch(`http://localhost:8000/api/generate-report/${uid}`, {
+                    method: 'GET',
+                  });
+                  
+                  if (!response.ok) {
+                    throw new Error('Failed to generate report');
+                  }
+                  
+                  // Get the PDF blob
+                  const blob = await response.blob();
+                  
+                  // Create a download link and trigger download
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'neuromove_performance_report.pdf';
+                  document.body.appendChild(a);
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                  document.body.removeChild(a);
+
+                  // Update last download date in Firebase
+                  const userRef = doc(db, "users", uid);
+                  await updateDoc(userRef, {
+                    lastDataExport: new Date().toISOString()
+                  });
+                  
+                  // Update the UI
+                  setUserData(prev => ({
+                    ...prev,
+                    lastDataExport: new Date().toISOString()
+                  }));
+                } catch (error) {
+                  console.error("Error downloading report:", error);
+                  // You might want to show an error message to the user
+                }
               }}
               sx={{
                 color: 'black',
