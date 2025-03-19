@@ -54,7 +54,7 @@
   align-items: flex-start;
   gap: 50px;
   margin-top: 50px;
-  position: relative;
+  position: static ;
   height: 400px;
   width: 100%;
 }
