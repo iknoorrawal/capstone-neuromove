@@ -48,7 +48,9 @@ const Game1InstructionsPart2 = ({ onComplete, onBack, onRestart }) => {
       '/left-arrow-grey.png',
       '/left-arrow-highlighted.png',
       '/right-arrow-grey.png',
-      '/right-arrow-highlighted.png'
+      '/right-arrow-highlighted.png',
+      '/standing-left.png',
+      '/standing-right.png'  // Add the new image to preload
     ];
 
     let loadedImages = 0;
@@ -297,11 +299,29 @@ const Game1InstructionsPart2 = ({ onComplete, onBack, onRestart }) => {
         />
       </div>
 
-      {/* Fixed Bins */}
+      {/* Bins container */}
       <div className="bins-container">
+        {/* Add standing-left image between bins when on step 1 */}
+        {currentStep === 1 && (
+          <img
+            src="/standing-left.png"
+            alt="Standing on Left Foot"
+            className="standing-position"
+          />
+        )}
+        
+        {/* Add standing-right image between bins when on step 3 */}
+        {currentStep === 3 && (
+          <img
+            src="/standing-right.png"
+            alt="Standing on Right Foot"
+            className="standing-position"
+          />
+        )}
+        
         <div className="correct-bin"
             style={{
-              left: '30%', /* Adjust this value for spacing */
+              left: '25%', /* Changed from 30% to move further left */
               transform: 'translateX(-50%)', /* Center the bin */
             }}
         >
@@ -309,7 +329,7 @@ const Game1InstructionsPart2 = ({ onComplete, onBack, onRestart }) => {
         </div>
         <div className="incorrect-bin"
             style={{
-              left: '70%', /* Adjust this value for spacing */
+              left: '75%', /* Changed from 70% to move further right */
               transform: 'translateX(-50%)', /* Center the bin */
             }}
         >

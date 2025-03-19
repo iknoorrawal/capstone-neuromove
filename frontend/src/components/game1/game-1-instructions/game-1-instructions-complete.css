@@ -4,46 +4,106 @@
     align-items: center;
     justify-content: center;
     height: 100vh;
-    background: linear-gradient(135deg, #f7e0c4, #fff);
+    background: #ffffff;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.top-left-decoration {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 1;
+    width: 60%;
+    height: auto;
+    transform-origin: top left;
+}
+
+.top-left-decoration svg {
+    width: 100%;
+    height: auto;
+}
+
+.bottom-right-decoration {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    pointer-events: none;
+    z-index: 1;
+    width: 60%;
+    height: auto;
+    transform-origin: bottom right;
+}
+
+.bottom-right-decoration svg {
+    width: 100%;
+    height: auto;
 }
 
 .instructions-complete-text {
-    font-size: 24px;
-    font-weight: bold;
     color: #B45522;
-    margin-bottom: 20px;
+    text-align: center;
+    font-size: 60px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%; /* 72px */
+    letter-spacing: -0.5px;
+    margin-bottom: 40px; /* Increased margin for better spacing with larger text */
+    width: 40vw;
+    position: relative;
+    z-index: 2;
 }
 
 .instructions-buttons {
     display: flex;
-    gap: 20px;
+    gap: 40px; /* Increased gap for larger buttons */
+    position: relative;
+    z-index: 2;
 }
 
+/* Updated styling for both buttons to be more consistent */
 .repeat-button, .play-button {
-    font-size: 18px;
-    padding: 10px 20px;
+    padding: 15px 30px;
     border: 2px solid #B45522;
-    border-radius: 25px;
+    border-radius: 40px; /* More rounded corners */
     cursor: pointer;
     transition: 0.3s ease-in-out;
 }
 
+/* Specific styling for repeat button */
 .repeat-button {
-    background: white;
     color: #B45522;
+    text-align: center;
+    font-family: Inter, sans-serif;
+    font-size: 35.588px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%; /* 42.706px */
+    background: transparent;
+    min-width: 400px; /* Ensure button has enough width for text */
 }
 
 .repeat-button:hover {
-    background: #B45522;
-    color: white;
+    background: rgba(180, 85, 34, 0.1); /* Lighter hover effect */
+    color: #B45522; /* Keep text color on hover */
 }
 
+/* Updated play button with the specified gradient */
 .play-button {
-    background: #B45522;
+    background: linear-gradient(94deg, #B45522 -8.37%, #D56F38 43.55%, #E48F62 94.22%);
     color: white;
+    text-align: center;
+    font-family: Inter, sans-serif;
+    font-size: 35.588px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 120%; /* 42.706px */
+    min-width: 250px; /* Ensure button has enough width */
+    border: none; /* Remove border since we have gradient */
 }
 
 .play-button:hover {
-    background: #8b3f18;
+    opacity: 0.95; /* Subtle hover effect for gradient button */
 }
