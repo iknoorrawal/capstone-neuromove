@@ -1,6 +1,6 @@
 import random
 import subprocess
-from fastapi import Body, FastAPI, Query, HTTPException
+from fastapi import Body, FastAPI, Query, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from BalanceQuest.constants import Faces, Flags, Foods, Fruits, Animals, HandSymbols, Nature, Sports, Clothing
@@ -8,6 +8,8 @@ from config import get_level_config
 import os
 from data_report import generate_report_for_user
 from fastapi.staticfiles import StaticFiles
+import serial
+import asyncio
 
 
 app = FastAPI()
@@ -286,3 +288,57 @@ async def generate_report_endpoint(uid: str):
             except:
                 pass
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Initialize Arduino connection
+try:
+    arduino = serial.Serial('/dev/cu.usbserial-0001', 9600, timeout=1)
+    print("✅ Successfully connected to Arduino")
+except Exception as e:
+    print(f"❌ Failed to connect to Arduino: {e}")
+    arduino = None
+
+# Arduino data reading function
+def get_latest_arduino_data():
+    """Get the most recent data from Arduino"""
+    if not arduino:
+        return 0, 0
+    
+    try:
+        # Read the latest line
+        line = arduino.readline().decode().strip()
+
+        # Split by comma since data comes as "0,0"
+        values = line.split(',')
+        if len(values) == 2:
+            left = float(values[0])
+            right = float(values[1])
+            return left, right
+
+    except Exception as e:
+        print(f"Error reading Arduino: {e}")
+
+    return 0, 0
+
+
+@app.get("/sensor-data")
+async def get_sensor_data():
+    left, right = get_latest_arduino_data()
+    return {
+        "left": left,
+        "right": right,
+        "status": "success"
+    }
+
+# Add this function to continuously read sensor data
+async def continuous_sensor_reading():
+    while True:
+        left, right = get_latest_arduino_data()
+        print(f"Left sensor:  {'▓' * int(left/10)} {left:.2f}")
+        print(f"Right sensor: {'▓' * int(right/10)} {right:.2f}\n")
+        await asyncio.sleep(0.1)  # Read every 100ms
+
+# Modify your app startup event
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(continuous_sensor_reading())
