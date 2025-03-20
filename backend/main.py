@@ -8,6 +8,7 @@ from config import get_level_config
 import os
 from data_report import generate_report_for_user
 from fastapi.staticfiles import StaticFiles
+import serial
 
 
 app = FastAPI()
@@ -286,3 +287,45 @@ async def generate_report_endpoint(uid: str):
             except:
                 pass
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Initialize Arduino connection
+try:
+    arduino = serial.Serial('/dev/cu.usbserial-0001', 9600, timeout=1)
+    print("✅ Successfully connected to Arduino")
+except Exception as e:
+    print(f"❌ Failed to connect to Arduino: {e}")
+    arduino = None
+
+# Arduino data reading function
+def get_latest_arduino_data():
+    """Get the most recent data from Arduino"""
+    if not arduino:
+        return 0, 0
+    
+    try:
+        # Read the latest line
+        line = arduino.readline().decode().strip()
+        print(f"Arduino data: {line}")  # Debug print
+
+        # Split by comma since data comes as "0,0"
+        values = line.split(',')
+        if len(values) == 2:
+            left = float(values[0])
+            right = float(values[1])
+            return left, right
+
+    except Exception as e:
+        print(f"Error reading Arduino: {e}")
+
+    return 0, 0
+
+
+@app.get("/sensor-data")
+async def get_sensor_data():
+    left, right = get_latest_arduino_data()
+    return {
+        "left": left,
+        "right": right,
+        "status": "success"
+    }
