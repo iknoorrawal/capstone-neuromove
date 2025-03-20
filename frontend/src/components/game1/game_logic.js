@@ -70,6 +70,80 @@ const LEVEL_CONFIG = {
   }
 };
 
+// Add these styles at the top of your component
+const styles = {
+  mainContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    minHeight: "100vh",
+    padding: "2rem",
+    background: "linear-gradient(135deg, #FDE3C3 0%, #FFF2E5 100%)",
+    position: "relative",
+    overflow: "hidden"
+  },
+  instructionBox: {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: "16px",
+    padding: "1.5rem 2.5rem",
+    marginBottom: "2rem",
+    boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.08)",
+    textAlign: "center",
+    transition: "transform 0.2s ease",
+    "&:hover": {
+      transform: "translateY(-2px)"
+    }
+  },
+  gameContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "2rem",
+    maxWidth: "800px",
+    width: "100%",
+    margin: "0 auto"
+  },
+  emojiContainer: {
+    position: "relative",
+    width: "250px",
+    height: "250px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "white",
+    borderRadius: "24px",
+    boxShadow: "0px 8px 30px rgba(0, 0, 0, 0.12)",
+    margin: "2rem 0",
+    animation: "float 3s ease-in-out infinite"
+  },
+  scoreBox: {
+    backgroundColor: "white",
+    borderRadius: "16px",
+    padding: "1rem 2rem",
+    boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.08)",
+    marginTop: "2rem",
+    display: "flex",
+    alignItems: "center",
+    gap: "1.5rem"
+  },
+  timerCircle: {
+    position: "absolute",
+    top: "-20px",
+    right: "-20px",
+    backgroundColor: "#A0522D",
+    color: "white",
+    width: "50px",
+    height: "50px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "1.2rem",
+    fontWeight: "bold",
+    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)"
+  }
+};
+
 function BalanceQuest() {
 
 
@@ -413,104 +487,90 @@ function BalanceQuest() {
   const currentGuess = gameData.guessEmojis[guessIndex];
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        minHeight: "100vh",
-        padding: 4,
-        background: "linear-gradient(to bottom right, #FDE3C3, #FFF2E5)",
-        position: "relative"
-      }}
-    >
+    <Box sx={styles.mainContainer}>
       {ExitButtonAndDialog}
 
-      <Box sx={{ mt: 3, mb: 2 }}>
-        <Typography variant="subtitle1" sx={{ color: '#666' }}>
-          Balance on left foot for "In Category"
-        </Typography>
-        <Typography variant="subtitle1" sx={{ color: '#666' }}>
-          Balance on right foot for "Not In Category"
-        </Typography>
-      </Box>
+      <Box sx={styles.gameContainer}>
+        <Box sx={styles.instructionBox}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              color: '#666',
+              fontWeight: 500,
+              mb: 1
+            }}
+          >
+            Balance on <span style={{ color: '#A0522D', fontWeight: 'bold' }}>left foot</span> for "In Category"
+            <br />
+            Balance on <span style={{ color: '#A0522D', fontWeight: 'bold' }}>right foot</span> for "Not In Category"
+          </Typography>
+        </Box>
 
-      <Typography variant="h3" sx={{ mb: 6, color: "#A0522D", fontWeight: "bold" }}>
-        Select the correct answer
-      </Typography>
-
-      <Box
-        sx={{
-          position: "relative",
-          width: "200px",
-          height: "200px",
-          mb: 4
-        }}
-      >
-        {/* Circular SVG countdown */}
-        <svg width="200" height="200">
-          <circle
-            cx="100"
-            cy="100"
-            r={90}
-            fill="none"
-            stroke="#A0522D"
-            strokeWidth="8"
-            strokeDasharray={2 * Math.PI * 90}
-            strokeDashoffset={2 * Math.PI * 90 * (1 - guessTimer / config.guessTime)}
-            strokeLinecap="round"
-          />
-        </svg>
-
-        {/* Emoji Container */}
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "140px",
-            height: "140px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "6rem",
+        <Typography 
+          variant="h3" 
+          sx={{ 
+            color: "#A0522D", 
+            fontWeight: "bold",
+            textAlign: "center",
+            mb: 4,
+            textShadow: "2px 2px 4px rgba(0,0,0,0.1)"
           }}
         >
-          {currentGuess.emoji}
+          Is this in the category?
+        </Typography>
+
+        <Box sx={styles.emojiContainer}>
+          <Box sx={styles.timerCircle}>
+            {guessTimer}s
+          </Box>
+          <Typography sx={{ fontSize: "8rem" }}>
+            {currentGuess.emoji}
+          </Typography>
+        </Box>
+
+        <Box sx={styles.scoreBox}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              color: "#A0522D",
+              fontWeight: "bold"
+            }}
+          >
+            Score: <span style={{ color: '#4CAF50' }}>{score}</span> / {guessIndex}
+          </Typography>
         </Box>
       </Box>
-      
-      <Box
-        sx={{
-          backgroundColor: "white",
-          borderRadius: "12px",
-          padding: "12px 24px",
-          boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-        }}
-      >
-        <Typography variant="h6" sx={{ color: "#A0522D" }}>
-          Score: {score} / {guessIndex} &nbsp;|&nbsp; Time left: {guessTimer}s
-        </Typography>
-      </Box>
+
+      {/* Add floating animations */}
+      <style>
+        {`
+          @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+          }
+        `}
+      </style>
 
       <Snackbar
         open={showFeedback}
         autoHideDuration={1000}
         onClose={handleFeedbackClose}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        sx={{ mt: 6 }}
       >
         <Alert
           onClose={handleFeedbackClose}
           severity={isCorrectAnswer ? "success" : "error"}
           sx={{
             width: '100%',
-            fontSize: '1.2rem',
+            fontSize: '1.4rem',
             fontWeight: 'bold',
             backgroundColor: isCorrectAnswer ? '#4CAF50' : '#f44336',
             color: 'white',
+            py: 2,
             '& .MuiAlert-icon': {
-              fontSize: '2rem'
+              fontSize: '2.2rem'
             }
           }}
         >
