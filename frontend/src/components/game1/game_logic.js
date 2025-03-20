@@ -96,6 +96,47 @@ function BalanceQuest() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrectAnswer, setIsCorrectAnswer] = useState(false);
 
+  const [sensorData, setSensorData] = useState({
+    leftSensor: 0.00,
+    rightSensor: 0.00,
+    status: 'Disconnected'
+  });
+
+  // Add this state to track if we can accept new guesses
+  const [canAcceptGuess, setCanAcceptGuess] = useState(true);
+
+  // Add a new state to track if we're waiting for sensors to reset
+  const [waitingForReset, setWaitingForReset] = useState(false);
+
+  useEffect(() => {
+      const interval = setInterval(() => {
+          fetchSensorData();
+      }, 10); 
+
+      return () => clearInterval(interval);
+  }, []);
+
+  const fetchSensorData = async () => {
+      try {
+          const response = await fetch('http://localhost:8000/sensor-data');
+          const data = await response.json();
+          console.log('Received data:', data); // Debug log
+
+          setSensorData({
+              leftSensor: data.left ?? 0.00,
+              rightSensor: data.right ?? 0.00,
+              status: data.connected ? 'Connected' : 'Disconnected'
+          });
+      } catch (error) {
+          console.error('Error fetching sensor data:', error);
+          setSensorData(prev => ({ ...prev, status: 'Error' }));
+      }
+  };
+
+  const formatNumber = (num) => {
+    return (typeof num === 'number' ? num : 0.00).toFixed(2);
+  };  
+
   useEffect(() => {
     // Preload audio files
     correctSoundPool.preload();
@@ -226,6 +267,37 @@ function BalanceQuest() {
     setShowFeedback(false);
   };
 
+  // Update the sensor watching useEffect
+  useEffect(() => {
+    if (!done && !showInitial) {
+      const leftSensorValue = formatNumber(sensorData.leftSensor);
+      const rightSensorValue = formatNumber(sensorData.rightSensor);
+
+      // If waiting for reset, check if both sensors are back to 0
+      if (waitingForReset) {
+        if (leftSensorValue === "0.00" && rightSensorValue === "0.00") {
+          setWaitingForReset(false);
+          setCanAcceptGuess(true);
+        }
+        return;
+      }
+
+      // Only process new guesses if we can accept them
+      if (canAcceptGuess) {
+        if (leftSensorValue >= 1.0) {
+          setCanAcceptGuess(false);
+          setWaitingForReset(true);
+          handleGuess(true);
+        }
+        else if (rightSensorValue >= 1.0) {
+          setCanAcceptGuess(false);
+          setWaitingForReset(true);
+          handleGuess(false);
+        }
+      }
+    }
+  }, [sensorData, canAcceptGuess, done, showInitial, waitingForReset]);
+
   if (error) {
     return (
       <div style={{ textAlign: "center", marginTop: "50px" }}>
@@ -354,6 +426,15 @@ function BalanceQuest() {
     >
       {ExitButtonAndDialog}
 
+      <Box sx={{ mt: 3, mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ color: '#666' }}>
+          Balance on left foot for "In Category"
+        </Typography>
+        <Typography variant="subtitle1" sx={{ color: '#666' }}>
+          Balance on right foot for "Not In Category"
+        </Typography>
+      </Box>
+
       <Typography variant="h3" sx={{ mb: 6, color: "#A0522D", fontWeight: "bold" }}>
         Select the correct answer
       </Typography>
@@ -399,43 +480,7 @@ function BalanceQuest() {
           {currentGuess.emoji}
         </Box>
       </Box>
-
-      <Box sx={{ display: "flex", gap: 3, mb: 4 }}>
-        <Button
-          variant="contained"
-          onClick={() => handleGuess(true)}
-          sx={{
-            backgroundColor: "#A0522D",
-            fontSize: "1.1rem",
-            padding: "12px 32px",
-            borderRadius: "8px",
-            "&:hover": {
-              backgroundColor: "#8B4513"
-            }
-          }}
-        >
-          In Category
-        </Button>
-
-        <Button
-          variant="outlined"
-          onClick={() => handleGuess(false)}
-          sx={{
-            borderColor: "#A0522D",
-            color: "#A0522D",
-            fontSize: "1.1rem",
-            padding: "12px 32px",
-            borderRadius: "8px",
-            "&:hover": {
-              borderColor: "#8B4513",
-              backgroundColor: "rgba(160, 82, 45, 0.1)"
-            }
-          }}
-        >
-          Not In Category
-        </Button>
-      </Box>
-
+      
       <Box
         sx={{
           backgroundColor: "white",
