@@ -60,6 +60,40 @@ const getNextRank = (currentRank) => {
   return null; // No higher rank available
 };
 
+// Function to check if a streak is a milestone (multiple of 50)
+const isStreakMilestone = (streak) => {
+  return streak > 0 && streak % 50 === 0;
+};
+
+// Function to award bonus points for streak milestones
+const awardStreakMilestoneBonus = async (uid, streak, currentPoints) => {
+  const MILESTONE_BONUS = 500;
+  
+  if (isStreakMilestone(streak)) {
+    // Add bonus points
+    const newTotalPoints = currentPoints + MILESTONE_BONUS;
+    
+    // Update user's points in Firestore
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, {
+      totalPoints: newTotalPoints,
+      lastMilestoneStreak: streak, // Keep track of the last milestone streak
+    });
+    
+    return {
+      awardedBonus: true,
+      newTotalPoints,
+      bonusAmount: MILESTONE_BONUS
+    };
+  }
+  
+  return {
+    awardedBonus: false,
+    newTotalPoints: currentPoints,
+    bonusAmount: 0
+  };
+};
+
 const Dashboard = () => {
   const { uid } = useParams();
   const navigate = useNavigate();
@@ -81,6 +115,9 @@ const Dashboard = () => {
   const [newRankName, setNewRankName] = useState("");
   // State for rank-up animation
   const [showRankAnimation, setShowRankAnimation] = useState(false);
+  // State for milestone bonus notification
+  const [milestoneNotification, setMilestoneNotification] = useState(false);
+  const [milestoneBonus, setMilestoneBonus] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -114,6 +151,41 @@ const Dashboard = () => {
           // Determine next rank
           const nextRankObj = getNextRank(rankObj);
           setNextRank(nextRankObj);
+          
+          // Check for streak milestone and award bonus if needed
+          if (isStreakMilestone(userData.currentStreak) && 
+              (!userData.lastMilestoneStreak || userData.lastMilestoneStreak !== userData.currentStreak)) {
+            
+            const result = await awardStreakMilestoneBonus(
+              uid, 
+              userData.currentStreak, 
+              userData.totalPoints || 0
+            );
+            
+            if (result.awardedBonus) {
+              // Update points in local state
+              setTotalPoints(result.newTotalPoints);
+              
+              // Show milestone notification
+              setMilestoneBonus(result.bonusAmount);
+              setMilestoneNotification(true);
+              
+              // Check if new points qualify for rank up
+              const newRankObj = getUserRank(result.newTotalPoints);
+              if (newRankObj.name !== rankObj.name) {
+                // User ranked up due to milestone bonus!
+                setCurrentRank(newRankObj);
+                setNextRank(getNextRank(newRankObj));
+                setNewRankName(newRankObj.name);
+                setRankUpNotification(true);
+                
+                // Show rank-up animation after a short delay
+                setTimeout(() => {
+                  setShowRankAnimation(true);
+                }, 1000);
+              }
+            }
+          }
           
         } else {
           console.log("User not found in Firestore");
@@ -155,6 +227,10 @@ const Dashboard = () => {
   
   const handleRankNotificationClose = () => {
     setRankUpNotification(false);
+  };
+  
+  const handleMilestoneNotificationClose = () => {
+    setMilestoneNotification(false);
   };
 
   // Generate the array of days for the current week (Monday to Sunday)
@@ -237,12 +313,30 @@ const Dashboard = () => {
       position: "relative",
       overflow: "hidden"
     }}>
+      {/* Milestone bonus notification */}
+      <Snackbar
+        open={milestoneNotification}
+        autoHideDuration={6000}
+        onClose={handleMilestoneNotificationClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        sx={{ mt: 2 }}
+      >
+        <Alert 
+          onClose={handleMilestoneNotificationClose} 
+          severity="success" 
+          sx={{ width: '100%', fontSize: '1rem' }}
+        >
+          🔥 Streak Milestone Achieved! Bonus +{milestoneBonus} points added!
+        </Alert>
+      </Snackbar>
+      
       {/* Rank-up notification */}
       <Snackbar
         open={rankUpNotification}
         autoHideDuration={6000}
         onClose={handleRankNotificationClose}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        sx={{ mt: milestoneNotification ? 8 : 2 }}
       >
         <Alert 
           onClose={handleRankNotificationClose} 
@@ -465,6 +559,12 @@ const Dashboard = () => {
                   <Typography variant="h4" fontWeight="bold" sx={{ lineHeight: 1 }}>
                     {currentStreak}
                   </Typography>
+                  {/* Show mini message for milestone streaks */}
+                  {isStreakMilestone(currentStreak) && (
+                    <Typography variant="caption" sx={{ color: "#FF6B00", fontWeight: "bold" }}>
+                      🏆 Milestone reached!
+                    </Typography>
+                  )}
                 </Box>
               </Box>
 
