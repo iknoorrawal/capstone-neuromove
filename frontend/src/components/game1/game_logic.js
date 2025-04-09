@@ -13,10 +13,44 @@ import {
   Dialog,
   DialogActions,
   DialogTitle,
-  Typography
+  Typography,
+  Snackbar,
+  Alert
 } from "@mui/material";
 
 import FinalScore from "./final_score";
+
+function createSoundPool(url, poolSize = 3) {
+  const sounds = Array(poolSize).fill().map(() => new Audio(url));
+  let index = 0;
+  
+  return {
+    preload: function() {
+      // Preload all sounds in the pool
+      sounds.forEach(sound => {
+        sound.load();
+        // Some browsers require interaction before playing
+        // This trick helps with initial loading
+        sound.volume = 0;
+        sound.play().then(() => {
+          sound.pause();
+          sound.currentTime = 0;
+          sound.volume = 1;
+        }).catch(err => console.log("Preload attempted, will work after user interaction"));
+      });
+    },
+    play: function() {
+      const sound = sounds[index];
+      sound.currentTime = 0;
+      sound.play().catch(err => console.error("Error playing sound:", err));
+      index = (index + 1) % poolSize;
+    }
+  };
+}
+
+// Create sound pools at the component level (outside any useEffect)
+const correctSoundPool = createSoundPool("http://localhost:8000/sounds/correct.mp3");
+const incorrectSoundPool = createSoundPool("http://localhost:8000/sounds/incorrect.mp3");
 
 const LEVEL_CONFIG = {
   1: {
@@ -37,6 +71,8 @@ const LEVEL_CONFIG = {
 };
 
 function BalanceQuest() {
+
+
   const { uid, level: levelParam } = useParams();
   const level = parseInt(levelParam) || 1;
   const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
@@ -57,7 +93,15 @@ function BalanceQuest() {
   const [dataSaved, setDataSaved] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
 
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [isCorrectAnswer, setIsCorrectAnswer] = useState(false);
 
+  useEffect(() => {
+    // Preload audio files
+    correctSoundPool.preload();
+    incorrectSoundPool.preload();
+  }, []);
+  
   useEffect(() => {
     const fetchGameData = async () => {
       try {
@@ -125,9 +169,19 @@ function BalanceQuest() {
 
     const currentEmoji = gameData.guessEmojis[guessIndex];
     const correctAnswer = currentEmoji.inGroup;
-    if (userSaysInCategory === correctAnswer) {
+    const isCorrect = userSaysInCategory === correctAnswer;
+    
+    // Set feedback states
+    setIsCorrectAnswer(isCorrect);
+    setShowFeedback(true);
+    
+    if (isCorrect) {
+      correctSoundPool.play();
       setScore((prev) => prev + 1);
+    } else {
+      incorrectSoundPool.play();
     }
+    
     goToNextGuess();
   };
   
@@ -166,6 +220,10 @@ function BalanceQuest() {
   const handleConfirmExit = () => {
     setOpenConfirm(false);
     navigate(`/balance-quest/${uid}/home-page`);
+  };
+
+  const handleFeedbackClose = () => {
+    setShowFeedback(false);
   };
 
   if (error) {
@@ -390,6 +448,30 @@ function BalanceQuest() {
           Score: {score} / {guessIndex} &nbsp;|&nbsp; Time left: {guessTimer}s
         </Typography>
       </Box>
+
+      <Snackbar
+        open={showFeedback}
+        autoHideDuration={1000}
+        onClose={handleFeedbackClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleFeedbackClose}
+          severity={isCorrectAnswer ? "success" : "error"}
+          sx={{
+            width: '100%',
+            fontSize: '1.2rem',
+            fontWeight: 'bold',
+            backgroundColor: isCorrectAnswer ? '#4CAF50' : '#f44336',
+            color: 'white',
+            '& .MuiAlert-icon': {
+              fontSize: '2rem'
+            }
+          }}
+        >
+          {isCorrectAnswer ? 'Correct!' : 'Incorrect'}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
