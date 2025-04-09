@@ -54,9 +54,13 @@ const Game1Instructions = ({ onComplete, onBack }) => {
 
   // Add click handler for the first screen
   const handleFirstScreenClick = () => {
-    if (currentFruitIndex >= fruits.length) {
-      setShowPart2(true);
-    }
+    setShowPart2(true);
+  };
+
+  const handleSkip = () => {
+    // Set all fruits as dropped and move to next step
+    setDroppedFruits(fruits.map(fruit => fruit.id));
+    setCurrentFruitIndex(fruits.length);
   };
 
   return (
@@ -127,20 +131,6 @@ const Game1Instructions = ({ onComplete, onBack }) => {
                 </div>
               ))}
 
-{showContinueText && (
-              <p style={{
-                color: '#B45522',
-                fontSize: '1.2rem',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                marginTop: 'auto',
-                marginBottom: '10rem',
-                position: 'absolute',
-                width: '100%'
-              }}>
-                Click anywhere to continue
-              </p>
-            )}
             </div>
 
             
@@ -149,13 +139,36 @@ const Game1Instructions = ({ onComplete, onBack }) => {
           <div 
             className="correct-bin"
             style={{
-              position: 'fixed',
-              bottom: '2rem',
+         
+     position: 'fixed',
+              bottom: '0rem',
               left: "50%",
               transform: "translateX(-50%)"
             }}
           >
             CORRECT
+          </div>
+
+          <div 
+            className="continue-button"
+            onClick={handleFirstScreenClick}
+            style={{
+              position: 'absolute',
+              bottom: '10px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              color: '#FBAD84',
+              textAlign: 'center',
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '18px',
+              fontStyle: 'normal',
+              fontWeight: '700',
+              cursor: 'pointer',
+              padding: '10px 20px',
+              zIndex: 10
+            }}
+          >
+            Click to continue
           </div>
         </div>
       )}

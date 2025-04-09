@@ -89,14 +89,14 @@
 
 @keyframes move-right-then-fall {
   0% { transform: translateX(0) translateY(0); opacity: 1; }
-  50% { transform: translateX(100%) translateY(0); opacity:1; }
-  100% { transform: translateX(100%) translateY(300px); opacity: 0; }
+  50% { transform: translateX(150%) translateY(0); opacity:1; }
+  100% { transform: translateX(150%) translateY(300px); opacity: 0; }
 }
 
 @keyframes move-center-then-fall {
   0% { transform: translateY(0); opacity: 1; }
-  50% { transform: translateX(-100%) translateY(0); opacity:1;}
-  100% { transform: translateX(-100%) translateY(300px); opacity: 0; }
+  50% { transform: translateX(-150%) translateY(0); opacity:1;}
+  100% { transform: translateX(-150%) translateY(300px); opacity: 0; }
 }
 
 .bucket {
