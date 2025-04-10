@@ -137,7 +137,6 @@ HandSymbols = [
     ("OK hand", "👌"),
     ("pinching hand", "🤏"),
     ("love-you gesture", "🤟"),
-    ("middle finger", "🖕"),
     ("call me hand", "🤙"),
     ("sign of the horns", "🤘"),
 ]

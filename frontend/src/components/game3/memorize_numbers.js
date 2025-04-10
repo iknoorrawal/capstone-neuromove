@@ -169,6 +169,20 @@ const ReachAndRecallMemorize = ({ user }) => {
     return <Typography>Loading...</Typography>;
   }
 
+  const ExitButtonAndDialog = (
+    <Box
+      sx={{
+        position: "absolute",
+        top: 16,
+        left: 16,
+      }}
+    >
+      <Button variant="outlined" color="#fff" onClick={handleOpenConfirm}>
+        Exit Game
+      </Button>
+    </Box>
+  );
+
   return (
     <Box
       sx={{
@@ -183,17 +197,7 @@ const ReachAndRecallMemorize = ({ user }) => {
         textAlign: "center",
       }}
     >
-      <Box
-        sx={{
-          position: "absolute",
-          top: 16,
-          left: 16,
-        }}
-      >
-        <Button variant="outlined" color="#fff" onClick={handleOpenConfirm}>
-          Exit Game
-        </Button>
-      </Box>
+      {ExitButtonAndDialog}
 
       {/* Confirmation dialog on exit */}
       <Dialog open={openConfirm} onClose={handleCloseConfirm}>
@@ -208,61 +212,95 @@ const ReachAndRecallMemorize = ({ user }) => {
         </DialogActions>
       </Dialog>
 
-      {countdown !== 0 && <Box sx={{ position: "relative", display: "inline-flex", mb: 3 }}>
-        <CircularProgress
-          variant="determinate"
-          value={(countdown / 15) * 100}
-          size={60}
-          thickness={5}
-          sx={{ color: "#369590" }}
-        />
-        <Box
-          sx={{
-            top: 0,
-            left: 0,
-            bottom: 0,
-            right: 0,
-            position: "absolute",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Typography variant="h6">{countdown}</Typography>
-        </Box>
-        </Box>}
+      {countdown !== 0 && (
+        <>
+          <Box sx={{ position: "relative", display: "inline-flex", mb: 3 }}>
+            <CircularProgress
+              variant="determinate"
+              value={(countdown / 15) * 100}
+              size={60}
+              thickness={5}
+              sx={{ color: "#369590" }}
+            />
+            <Box
+              sx={{
+                top: 0,
+                left: 0,
+                bottom: 0,
+                right: 0,
+                position: "absolute",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Typography variant="h6">{countdown}</Typography>
+            </Box>
+          </Box>
 
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 500 }}>
-        Remember the following numbers on the screen
-      </Typography>
+          <Typography variant="h4" gutterBottom sx={{ fontWeight: 500 }}>
+            Remember the following numbers on the screen
+          </Typography>
 
-      <Box sx={{ display: "flex", gap: 4, mb: 3, flexWrap: "wrap", justifyContent: "center" }}>
-        {data.numbers.map((num, index) => (
-          <Box
-            key={index}
-            sx={{
-              width: 120,
-              height: 120,
-              borderRadius: "50%",
-              backgroundColor: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: 1
+          <Box sx={{ display: "flex", gap: 4, mb: 3, flexWrap: "wrap", justifyContent: "center" }}>
+            {data.numbers.map((num, index) => (
+              <Box
+                key={index}
+                sx={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: "50%",
+                  backgroundColor: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: 1
+                }}
+              >
+                <Typography variant="h3" sx={{ color: "#000", fontWeight: "bold" }}>
+                  {num}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </>
+      )}
+
+      {countdown === 0 && (
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography 
+            variant="h4" 
+            sx={{ 
+              color: '#fff',
+              fontWeight: 'bold',
+              mb: 3,
+              animation: 'fadeIn 0.5s ease-in'
             }}
           >
-            <Typography variant="h3" sx={{ color: "#000", fontWeight: "bold" }}>
-              {num}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
-
-      {output && (
-        <Typography variant="body1" sx={{ mt: 3, color: "green" }}>
-          {output}
-        </Typography>
+            Get Ready!
+          </Typography>
+          <Typography 
+            variant="h5" 
+            sx={{ 
+              color: '#fff',
+              opacity: 0.9,
+              animation: 'fadeIn 0.5s ease-in 0.2s both'
+            }}
+          >
+            The game will begin automatically now!
+          </Typography>
+        </Box>
       )}
+
+      {/* Add animation keyframes */}
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}
+      </style>
     </Box>
   );
 };
