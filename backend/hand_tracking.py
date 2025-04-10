@@ -46,7 +46,6 @@ cap = cv2.VideoCapture(0)
 
 # Create window and set it to fullscreen
 cv2.namedWindow('Hand Tracking Game', cv2.WINDOW_NORMAL)
-cv2.setWindowProperty('Hand Tracking Game', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
 # Get the screen dimensions
 screen_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
