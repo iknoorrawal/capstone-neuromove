@@ -3,7 +3,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    width: 75%;
+    width: 85%; /* Increased from 75% to make bins further apart */
     height: 250px; /* Fixed height to maintain position */
     position: absolute;
     bottom: 0; /* Ensures bins are anchored to the bottom */
@@ -44,11 +44,62 @@
     z-index: -2;
 }
 
-
 .right-arrow {
     right: -140px; /* Move right arrow closer */
 }
 
+/* Style for the standing position image */
+.standing-position {
+    position: absolute;
+    left: 50%; /* Center horizontally */
+    bottom: 2%; /* Use percentage instead of fixed pixels */
+    transform: translateX(-50%); /* Center the image exactly */
+    height: auto; /* Auto height to maintain aspect ratio */
+    width: 15%; /* Use percentage width */
+    min-width: 80px; /* Set minimum width */
+    max-width: 150px; /* Set maximum width */
+    z-index: 5;
+}
+
+/* More comprehensive media queries for different screen dimensions */
+@media (max-width: 1400px) {
+    .standing-position {
+        width: 13%;
+        min-width: 70px;
+        bottom: 2.5%;
+    }
+}
+
+@media (max-width: 1024px) {
+    .standing-position {
+        width: 12%;
+        min-width: 60px;
+        bottom: 3%;
+    }
+}
+
+@media (max-width: 768px) {
+    .standing-position {
+        width: 10%;
+        min-width: 50px;
+        bottom: 3.5%;
+    }
+}
+
+@media (max-width: 480px) {
+    .standing-position {
+        width: 15%;
+        min-width: 40px;
+        bottom: 4%;
+    }
+}
+
+/* For very tall and narrow screens (like some mobile devices) */
+@media (max-aspect-ratio: 2/3) {
+    .standing-position {
+        bottom: 5%;
+    }
+}
 
 /* Timer Styling */
 .item-timer {
